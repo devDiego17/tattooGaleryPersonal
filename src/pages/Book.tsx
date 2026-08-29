@@ -1,154 +1,116 @@
-import { useState, useEffect, useCallback } from "react";
-import type { ServiceType, BookingData, TimeSlot } from "../types/booking";
-import {
-  fetchAvailability,
-  bookSession,
-  buildWhatsAppUrl,
-  SERVICE_LABELS,
-} from "../lib/calendarApi";
+import React, { useState, useEffect, useCallback } from "react";
+import { buildWhatsAppLink } from "../lib/Whatsapp.ts";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-/** All possible time slots offered each working day */
-const BASE_SLOTS: string[] = [
-  "10:00", "11:30", "13:00", "14:30", "16:00", "17:30",
+// --- Constantes y Configuración ---
+const BASE_SLOTS = [
+  "10:00", "11:30", "13:00", "14:30", "16:00", "17:30"
 ];
-
-/**
- * How many consecutive 1.5-hour slots each service occupies.
- * Used to mark following slots as unavailable when the selected service is long.
- */
-const SERVICE_SLOT_COUNT: Record<ServiceType, number> = {
-  tattoo_session: 3,       // ≥ 3 h → occupies 3 slots
-  design_consultation: 1,  // 1 h → occupies 1 slot
-  flash_day: 2,            // 1–2 h → occupies 2 slots
-};
-
-const BOOKING_TYPES: {
-  id: ServiceType;
-  label: string;
-  desc: string;
-  duration: string;
-}[] = [
-    {
-      id: "tattoo_session",
-      label: "Sesión de Tatuaje",
-      desc: "Diseño personalizado, sesión completa",
-      duration: "3 – 6 h",
-    },
-    {
-      id: "design_consultation",
-      label: "Consulta de Diseño",
-      desc: "Revisamos ideas, referencias y presupuesto",
-      duration: "1 h",
-    },
-    {
-      id: "flash_day",
-      label: "Flash del Día",
-      desc: "Diseños listos para tatuar sin espera",
-      duration: "1 – 2 h",
-    },
-  ];
-
-const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-];
-const DAYS_SHORT = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toKey(y: number, m: number, d: number): string {
-  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month + 1, 0).getDate();
-}
-function getFirstWeekday(year: number, month: number): number {
-  return new Date(year, month, 1).getDay();
-}
-
-/**
- * Given a set of busy slot strings from the API and the selected service,
- * computes the final TimeSlot[] array, marking slots that are either
- * directly busy or would be blocked by the service's duration.
- */
-function computeSlots(busySlots: string[], service: ServiceType): TimeSlot[] {
-  const busySet = new Set(busySlots);
-  const neededSlots = SERVICE_SLOT_COUNT[service];
-
-  return BASE_SLOTS.map((slotTime, idx) => {
-    // Check if this slot or any of the following (neededSlots-1) are busy
-    let blocked = false;
-    for (let k = 0; k < neededSlots; k++) {
-      const futureSlot = BASE_SLOTS[idx + k];
-      if (!futureSlot || busySet.has(futureSlot)) {
-        blocked = true;
-        break;
-      }
-    }
-    return { time: slotTime, available: !blocked };
-  });
-}
-
-// ── Design tokens ─────────────────────────────────────────────────────────────
 
 const C = {
-  bg: "#09080E", card: "#0E0D16", border: "#221F2C", borderLight: "#2E2A3A",
-  fg: "#EDE8DF", muted: "#6A6575", lavender: "#ABA7E3", purple: "#4525A2",
-  bookedText: "#3A3548", booked: "#1C1A22",
-  error: "#E06B75",
-} as const;
-
-const labelStyle: React.CSSProperties = {
-  fontSize: "0.6rem", letterSpacing: "0.14em", textTransform: "uppercase",
-  color: C.muted, fontFamily: "'Instrument Sans', sans-serif", fontWeight: 500,
+  bg: "#0d0d0d",
+  card: "#171717",
+  border: "#262626",
+  accent: "#e5e5e5",
+  text: "#a3a3a3",
+  textLight: "#f5f5f5",
+  danger: "#ef4444",
+  success: "#22c55e",
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.875rem",
+  fontWeight: 500,
+  color: C.text,
+  marginBottom: "0.5rem",
+};
 
-export default function Book() {
-  const today = new Date();
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "0.75rem 1rem",
+  backgroundColor: "#000000",
+  border: `1px solid ${C.border}`,
+  borderRadius: "0.5rem",
+  color: C.textLight,
+  outline: "none",
+  boxSizing: "border-box",
+};
 
-  // Step state
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+interface BookingComponentProps {
+  bookingType: string; // e.g., 'tattoo_session' | 'consultation'
+}
 
-  // Step 1 — Service selection
-  const [bookingType, setBookingType] = useState<ServiceType>("tattoo_session");
+export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedTime, setSelectedTime] = useState<string>("");
 
-  // Step 2 — Calendar & time slot
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const [selected, setSelected] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  // Form states
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientIdea, setClientIdea] = useState("");
 
-  // Availability fetch state
-  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  // Status states
+  const [slots, setSlots] = useState<string[]>([]);
+  const [rawBusySlots, setRawBusySlots] = useState<string[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
 
-  // Step 3 — Contact form
-  const [form, setForm] = useState({ name: "", email: "", idea: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-  const firstWeekday = getFirstWeekday(viewYear, viewMonth);
+  // --- Helpers Calendario ---
+  const todayNormalized = new Date();
+  todayNormalized.setHours(0, 0, 0, 0);
 
-  // ── Fetch availability when selected date changes ─────────────────────────
+  const viewYear = currentDate.getFullYear();
+  const viewMonth = currentDate.getMonth();
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+
+  // --- Lógica de Slots ---
+  const computeSlots = (busy: string[], type: string): string[] => {
+    // Si la sesión toma múltiples slots (ej. 3 slots continuos para tattoo)
+    const neededSlots = type === "tattoo_session" ? 3 : 1;
+
+    return BASE_SLOTS.filter((_, idx) => {
+      for (let i = 0; i < neededSlots; i++) {
+        const checkSlot = BASE_SLOTS[idx + i];
+        if (!checkSlot || busy.includes(checkSlot)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  };
+
+  const fetchAvailability = async (date: string, options?: { signal?: AbortSignal }): Promise<string[]> => {
+    const res = await fetch(`${import.meta.env.VITE_APPS_SCRIPT_URL}?action=availability&date=${date}`, {
+      signal: options?.signal,
+    });
+    const data = await res.json();
+
+    // Tu Apps Script no devuelve `ok: true`, devuelve directamente { busySlots: [...] }
+    if (data.error) throw new Error(data.error);
+    return data.busySlots || [];
+  };
+
   const loadSlots = useCallback(
-    async (date: string) => {
+    async (date: string, signal?: AbortSignal) => {
       setSlotsLoading(true);
       setSlotsError(null);
       setSlots([]);
       try {
-        const busySlots = await fetchAvailability(date);
-        setSlots(computeSlots(busySlots, bookingType));
+        const busy = await fetchAvailability(date, { signal });
+        setRawBusySlots(busy);
+        setSlots(computeSlots(busy, bookingType));
       } catch (err) {
-        setSlotsError(
-          err instanceof Error ? err.message : "Error al cargar disponibilidad"
-        );
+        if ((err as Error).name !== "AbortError") {
+          setSlotsError(err instanceof Error ? err.message : "Error al cargar disponibilidad");
+        }
       } finally {
         setSlotsLoading(false);
       }
@@ -157,562 +119,332 @@ export default function Book() {
   );
 
   useEffect(() => {
-    if (selected) {
-      setSelectedSlot(null);
-      void loadSlots(selected);
-    }
-  }, [selected, loadSlots]);
+    if (!selectedDate) return;
+    const controller = new AbortController();
+    loadSlots(selectedDate, controller.signal);
+    return () => controller.abort();
+  }, [selectedDate, loadSlots]);
 
-  // Re-compute slots (without re-fetching) when service changes on step 2
-  useEffect(() => {
-    if (slots.length > 0) {
-      // We still have the raw busy slots — but we didn't store them separately.
-      // Trigger a fresh fetch if date is already selected and we're on step 2.
-      if (selected && step === 2) {
-        void loadSlots(selected);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingType]);
-
-  // ── Calendar navigation ───────────────────────────────────────────────────
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
-    else setViewMonth(m => m - 1);
-    setSelected(null); setSelectedSlot(null); setSlots([]);
+    setSelectedDate("");
+    setSelectedTime("");
+    setCurrentDate(new Date(viewYear, viewMonth - 1, 1));
   };
 
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
-    else setViewMonth(m => m + 1);
-    setSelected(null); setSelectedSlot(null); setSlots([]);
+    setSelectedDate("");
+    setSelectedTime("");
+    setCurrentDate(new Date(viewYear, viewMonth + 1, 1));
   };
 
-  const handleDayClick = (day: number) => {
-    const key = toKey(viewYear, viewMonth, day);
-    const isPast = new Date(viewYear, viewMonth, day) <
-      new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const isSunday = new Date(viewYear, viewMonth, day).getDay() === 0;
-    if (isPast || isSunday) return;
-    setSelected(key);
-  };
-
-  // ── Form submit → POST → WhatsApp redirect ────────────────────────────────
-  const handleSubmit = async (e: React.FormEvent) => {
+  // --- Submit de la reserva ---
+  const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selected || !selectedSlot) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    const bookingData: BookingData = {
-      service: bookingType,
-      date: selected,
-      time: selectedSlot,
-      name: form.name.trim(),
-      email: form.email.trim(),
-      idea: form.idea.trim() || undefined,
-    };
+    setLoading(true);
+    setError(null);
 
     try {
-      const result = await bookSession(bookingData);
+      const response = await fetch(import.meta.env.VITE_APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "book",
+          service: bookingType,
+          date: selectedDate,
+          time: selectedTime,
+          name: clientName,
+          email: clientEmail,
+          phone: clientPhone,
+          idea: clientIdea,
+        }),
+      });
 
-      if (!result.ok) {
-        throw new Error(result.error ?? "El servidor rechazó la solicitud");
+      const result = await response.json();
+
+      if (result.ok) {
+        // 1. Prepara el enlace con los datos del formulario
+        const waUrl = buildWhatsAppLink({
+          service: bookingType,
+          date: selectedDate,
+          time: selectedTime,
+          name: clientName,
+          email: clientEmail,
+          idea: clientIdea,
+        });
+
+        // 2. Abre WhatsApp en una ventana nueva
+        window.open(waUrl, "_blank");
+
+        // 3. Notifica al usuario en la UI
+        setSuccess(true);
+      } else {
+        setError(result.error || "No se pudo procesar la reserva.");
       }
-
-      // Success — mark as submitted first, then open WhatsApp
-      setSubmitted(true);
-      const waUrl = buildWhatsAppUrl(bookingData);
-      window.open(waUrl, "_blank", "noopener,noreferrer");
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : "Error inesperado. Inténtalo de nuevo."
-      );
+      setError("Error de red al conectar con el servidor.");
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  // ── Reset flow ────────────────────────────────────────────────────────────
-  const resetFlow = () => {
-    setSubmitted(false);
-    setStep(1);
-    setSelected(null);
-    setSelectedSlot(null);
-    setSlots([]);
-    setForm({ name: "", email: "", idea: "" });
-    setSubmitError(null);
-  };
-
-  // ── Confirmation screen ───────────────────────────────────────────────────
-  if (submitted && selected && selectedSlot) {
-    const [y, m, d] = selected.split("-");
-    const displayDate = `${d}/${m}/${y}`;
-    const serviceLabel = SERVICE_LABELS[bookingType];
-
-    return (
-      <div style={{ minHeight: "100svh", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
-        <div style={{ textAlign: "center", maxWidth: "480px" }}>
-          <div style={{
-            width: 72, height: 72, borderRadius: "50%",
-            border: `1px solid ${C.lavender}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 2rem", fontSize: "1.5rem", color: C.lavender,
-          }}>
-            ✓
-          </div>
-          <h1 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 300, color: C.fg, marginBottom: "1rem" }}>
-            Solicitud Enviada
-          </h1>
-          <p style={{ color: C.muted, lineHeight: 1.7, marginBottom: "2.5rem" }}>
-            Gracias, <strong style={{ color: C.fg }}>{form.name}</strong>. Revisaré tu solicitud
-            y te confirmaré por WhatsApp en las próximas 24 horas.
-          </p>
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: "4px", padding: "1.5rem", marginBottom: "2.5rem", textAlign: "left" }}>
-            <p style={labelStyle}>Resumen</p>
-            <p style={{ color: C.fg, marginTop: "0.75rem", fontFamily: "'Fraunces', Georgia, serif", fontSize: "1rem", fontWeight: 300 }}>
-              {serviceLabel}
-            </p>
-            <p style={{ color: C.muted, fontSize: "0.8rem", marginTop: "0.25rem" }}>
-              {displayDate} · {selectedSlot}
-            </p>
-          </div>
-          <button
-            onClick={resetFlow}
-            style={{ fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: C.muted, background: "none", border: "none", cursor: "pointer" }}
-          >
-            ← Hacer otra solicitud
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Main 3-step flow ──────────────────────────────────────────────────────
   return (
-    <div style={{ paddingTop: "64px", minHeight: "100svh" }}>
 
-      {/* Header */}
-      <section style={{ padding: "clamp(3rem, 8vw, 6rem) clamp(1.5rem, 5vw, 4rem) clamp(2rem, 4vw, 3rem)", borderBottom: `1px solid ${C.border}` }}>
-        <p style={labelStyle}>Agendar</p>
-        <h1 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "clamp(2.5rem, 7vw, 5rem)", fontWeight: 300, color: C.fg, margin: "0.75rem 0 0", letterSpacing: "-0.02em", lineHeight: 1.05 }}>
-          Reserva tu sesión
-        </h1>
-        <p style={{ color: C.muted, marginTop: "1rem", maxWidth: "480px", lineHeight: 1.7, fontSize: "0.9rem" }}>
-          Selecciona el tipo de servicio, elige una fecha disponible y completa tu solicitud. Te confirmaré en 24 h.
-        </p>
-      </section>
+    //estilos de calendario de citas y formularios
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#08030d",
+        paddingTop: "140px",
+        paddingBottom: "80px",
+        paddingLeft: "1rem",
+        paddingRight: "1rem",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+      }}
+    >
+      {/* Tarjeta contenedora principal */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "460px",
+          backgroundColor: "#13091f",
+          border: "1px solid #2d1847",
+          borderRadius: "1.25rem",
+          padding: "2rem",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8)",
+        }}
+      >
+        <h2
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            color: "#ffffff",
+            marginBottom: "1.75rem",
+            textAlign: "center",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Reservar Agenda
+        </h2>
 
-      {/* Step indicator */}
-      <div style={{ display: "flex", borderBottom: `1px solid ${C.border}`, padding: "0 clamp(1.5rem, 5vw, 4rem)" }}>
-        {(["Servicio", "Fecha & Hora", "Datos"] as const).map((label, i) => {
-          const s = (i + 1) as 1 | 2 | 3;
-          const active = step === s;
-          const done = step > s;
-          return (
-            <button key={label} onClick={() => { if (done) setStep(s); }}
+        {/* Calendario */}
+        <div style={{ marginBottom: "2rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1.25rem",
+            }}
+          >
+            <button
+              type="button"
+              onClick={prevMonth}
               style={{
-                background: "none", border: "none", padding: "1.25rem 0", marginRight: "2rem",
-                cursor: done ? "pointer" : "default", fontSize: "0.6875rem", letterSpacing: "0.12em",
-                textTransform: "uppercase", fontWeight: 500, fontFamily: "'Instrument Sans', sans-serif",
-                color: active ? C.fg : done ? C.lavender : C.muted,
-                borderBottom: active ? `1px solid ${C.lavender}` : "1px solid transparent",
-                transition: "color 0.2s, border-color 0.2s",
+                background: "transparent",
+                border: "1px solid #2d1847",
+                borderRadius: "0.5rem",
+                padding: "0.35rem 0.75rem",
+                color: "#e0aaff",
+                cursor: "pointer",
+                fontSize: "0.85rem",
               }}
             >
-              {i + 1}. {label}
+              &lt; Ant
             </button>
-          );
-        })}
-      </div>
+            <span style={{ fontWeight: 600, color: "#ffffff", textTransform: "capitalize", fontSize: "1rem" }}>
+              {currentDate.toLocaleString("es-ES", { month: "long", year: "numeric" })}
+            </span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              style={{
+                background: "transparent",
+                border: "1px solid #2d1847",
+                borderRadius: "0.5rem",
+                padding: "0.35rem 0.75rem",
+                color: "#e0aaff",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              Sig &gt;
+            </button>
+          </div>
 
-      <div style={{ padding: "clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4rem)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "0.35rem", textAlign: "center" }}>
+            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((d) => (
+              <span key={d} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#c77dff", padding: "0.25rem 0" }}>
+                {d}
+              </span>
+            ))}
 
-        {/* ── STEP 1 — Tipo de servicio ── */}
-        {step === 1 && (
-          <div style={{ maxWidth: "720px" }}>
-            <p style={{ ...labelStyle, marginBottom: "1.5rem" }}>Tipo de servicio</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {BOOKING_TYPES.map(bt => {
-                const active = bookingType === bt.id;
-                return (
-                  <button key={bt.id} onClick={() => setBookingType(bt.id)}
-                    style={{
-                      background: active ? "rgba(171,167,227,0.06)" : C.card,
-                      border: `1px solid ${active ? C.lavender : C.border}`,
-                      borderRadius: "4px", padding: "1.5rem 2rem", cursor: "pointer",
-                      textAlign: "left", display: "flex", alignItems: "center",
-                      justifyContent: "space-between", gap: "1rem",
-                      transition: "border-color 0.2s, background 0.2s",
-                    }}
-                  >
-                    <div>
-                      <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.25rem", fontWeight: 300, color: C.fg, margin: 0 }}>
-                        {bt.label}
-                      </p>
-                      <p style={{ fontSize: "0.8rem", color: C.muted, margin: "0.25rem 0 0" }}>
-                        {bt.desc}
-                      </p>
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ ...labelStyle, color: active ? C.lavender : C.muted }}>{bt.duration}</p>
-                      <div style={{
-                        width: 20, height: 20, borderRadius: "50%",
-                        border: `1px solid ${active ? C.lavender : C.muted}`,
-                        background: active ? C.lavender : "transparent",
-                        marginTop: "0.5rem", marginLeft: "auto",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        transition: "all 0.2s",
-                      }}>
-                        {active && <div style={{ width: 8, height: 8, borderRadius: "50%", background: C.bg }} />}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ marginTop: "2.5rem", display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={() => setStep(2)}
-                style={{ padding: "0.75rem 2rem", background: C.lavender, color: C.bg, border: "none", borderRadius: "2px", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600, cursor: "pointer", fontFamily: "'Instrument Sans', sans-serif" }}
-              >
-                Continuar →
-              </button>
+            {Array.from({ length: firstDayIndex }).map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const cellDate = new Date(viewYear, viewMonth, day);
+              cellDate.setHours(0, 0, 0, 0);
+
+              const isPast = cellDate.getTime() < todayNormalized.getTime();
+              const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const isSelected = selectedDate === dateStr;
+
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  disabled={isPast}
+                  onClick={() => {
+                    setSelectedDate(dateStr);
+                    setSelectedTime("");
+                  }}
+                  style={{
+                    padding: "0.55rem 0",
+                    borderRadius: "0.5rem",
+                    border: isSelected ? "1px solid #e0aaff" : "1px solid transparent",
+                    backgroundColor: isSelected ? "#9d4edd" : "transparent",
+                    color: isSelected ? "#ffffff" : isPast ? "#3c2856" : "#ffffff",
+                    fontWeight: isSelected ? "bold" : "normal",
+                    cursor: isPast ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Horarios Disponibles */}
+        {selectedDate && (
+          <div style={{ marginBottom: "2rem" }}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#e0aaff", marginBottom: "0.85rem" }}>
+              Horarios disponibles
+            </h3>
+            {slotsLoading && <p style={{ color: "#e0aaff", fontSize: "0.875rem" }}>Cargando disponibilidad...</p>}
+            {slotsError && <p style={{ color: "#ff5555", fontSize: "0.875rem" }}>{slotsError}</p>}
+            {!slotsLoading && !slotsError && slots.length === 0 && (
+              <p style={{ color: "#e0aaff", fontSize: "0.875rem" }}>No hay espacios libres para este día.</p>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.6rem" }}>
+              {slots.map((time) => (
+                <button
+                  key={time}
+                  type="button"
+                  onClick={() => setSelectedTime(time)}
+                  style={{
+                    padding: "0.6rem",
+                    borderRadius: "0.5rem",
+                    border: `1px solid ${selectedTime === time ? "#c77dff" : "#2d1847"}`,
+                    backgroundColor: selectedTime === time ? "#9d4edd" : "transparent",
+                    color: "#ffffff",
+                    fontWeight: selectedTime === time ? 700 : 400,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {time}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* ── STEP 2 — Fecha & Hora ── */}
-        {step === 2 && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 220px", gap: "3rem", alignItems: "start", maxWidth: "900px" }}>
-
-              {/* Calendar */}
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
-                  <button onClick={prevMonth}
-                    style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, width: 36, height: 36, borderRadius: "2px", cursor: "pointer", fontSize: "1rem" }}
-                  >
-                    &#8249;
-                  </button>
-                  <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.25rem", fontWeight: 300, color: C.fg }}>
-                    {MONTHS[viewMonth]} {viewYear}
-                  </span>
-                  <button onClick={nextMonth}
-                    style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, width: 36, height: 36, borderRadius: "2px", cursor: "pointer", fontSize: "1rem" }}
-                  >
-                    &#8250;
-                  </button>
-                </div>
-
-                {/* Day headers */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: "0.5rem" }}>
-                  {DAYS_SHORT.map(d => (
-                    <div key={d} style={{ textAlign: "center", ...labelStyle, padding: "0.25rem 0" }}>{d}</div>
-                  ))}
-                </div>
-
-                {/* Day cells */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" }}>
-                  {Array.from({ length: firstWeekday }).map((_, i) => <div key={`e-${i}`} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const day = i + 1;
-                    const key = toKey(viewYear, viewMonth, day);
-                    const isPast = new Date(viewYear, viewMonth, day) <
-                      new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                    const isSunday = new Date(viewYear, viewMonth, day).getDay() === 0;
-                    const isSelected = selected === key;
-                    const disabled = isPast || isSunday;
-
-                    let bg: string = "transparent";
-                    let color: string = C.fg;
-                    let border: string = "1px solid transparent";
-                    let cursor: string = "pointer";
-
-                    if (disabled) { color = C.bookedText; cursor = "default"; }
-                    else if (isSelected) { bg = C.lavender; color = C.bg; border = `1px solid ${C.lavender}`; }
-
-                    return (
-                      <button key={key} onClick={() => !disabled && handleDayClick(day)}
-                        style={{
-                          aspectRatio: "1", display: "flex", flexDirection: "column",
-                          alignItems: "center", justifyContent: "center",
-                          background: bg, color, border, borderRadius: "3px",
-                          cursor, fontSize: "0.8rem", fontWeight: 400,
-                          fontFamily: "'Instrument Sans', sans-serif",
-                          transition: "background 0.15s, border-color 0.15s",
-                        }}
-                      >
-                        {day}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Time slots panel */}
-              <div>
-                {!selected ? (
-                  <div style={{ padding: "2rem 0", color: C.muted, fontSize: "0.8rem", lineHeight: 1.6 }}>
-                    Selecciona un día para ver los horarios disponibles.
-                  </div>
-                ) : slotsLoading ? (
-                  <div style={{ padding: "2rem 0" }}>
-                    <p style={{ ...labelStyle, marginBottom: "1rem" }}>
-                      {selected.split("-").reverse().join("/")}
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      {BASE_SLOTS.map(t => (
-                        <div key={t} style={{
-                          padding: "0.65rem 1rem", borderRadius: "3px",
-                          background: C.card, border: `1px solid ${C.border}`,
-                          fontSize: "0.8125rem", color: C.bookedText,
-                          fontFamily: "'Instrument Sans', sans-serif",
-                          animation: "pulse 1.4s ease-in-out infinite",
-                        }}>
-                          {t}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : slotsError ? (
-                  <div style={{ padding: "2rem 0" }}>
-                    <p style={{ ...labelStyle, marginBottom: "0.75rem", color: C.error }}>
-                      Error al cargar
-                    </p>
-                    <p style={{ color: C.muted, fontSize: "0.8rem", marginBottom: "1rem", lineHeight: 1.5 }}>
-                      {slotsError}
-                    </p>
-                    <button
-                      onClick={() => selected && void loadSlots(selected)}
-                      style={{ fontSize: "0.6875rem", letterSpacing: "0.1em", textTransform: "uppercase", color: C.lavender, background: "none", border: `1px solid ${C.border}`, padding: "0.5rem 1rem", borderRadius: "2px", cursor: "pointer" }}
-                    >
-                      Reintentar
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <p style={{ ...labelStyle, marginBottom: "1rem" }}>
-                      {selected.split("-").reverse().join("/")}
-                    </p>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                      {slots.map(slot => {
-                        const isChosen = selectedSlot === slot.time;
-                        return (
-                          <button key={slot.time}
-                            onClick={() => slot.available && setSelectedSlot(slot.time)}
-                            style={{
-                              padding: "0.65rem 1rem",
-                              background: isChosen ? C.lavender : slot.available ? C.card : "transparent",
-                              border: `1px solid ${isChosen ? C.lavender : slot.available ? C.border : C.booked}`,
-                              borderRadius: "3px",
-                              color: isChosen ? C.bg : slot.available ? C.fg : C.bookedText,
-                              fontSize: "0.8125rem", fontFamily: "'Instrument Sans', sans-serif",
-                              cursor: slot.available ? "pointer" : "default",
-                              textDecoration: slot.available ? "none" : "line-through",
-                              transition: "all 0.15s", textAlign: "left",
-                            }}
-                          >
-                            {slot.time}
-                            {!slot.available && (
-                              <span style={{ fontSize: "0.65rem", marginLeft: "0.5rem", color: C.bookedText }}>
-                                Ocupado
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
+        {/* Formulario de Confirmación */}
+        {selectedTime && (
+          <form onSubmit={handleConfirmBooking} style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            <div>
+              <label htmlFor="booking-name" style={labelStyle}>
+                Nombre Completo
+              </label>
+              <input
+                id="booking-name"
+                type="text"
+                required
+                style={inputStyle}
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
             </div>
 
-            {/* Step 2 navigation */}
-            <div style={{ marginTop: "2.5rem", display: "flex", justifyContent: "space-between", maxWidth: "900px" }}>
-              <button onClick={() => setStep(1)}
-                style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, padding: "0.75rem 1.5rem", borderRadius: "2px", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'Instrument Sans', sans-serif" }}
-              >
-                ← Volver
-              </button>
-              <button
-                onClick={() => { if (selected && selectedSlot) setStep(3); }}
-                disabled={!selected || !selectedSlot}
-                style={{
-                  padding: "0.75rem 2rem",
-                  background: selected && selectedSlot ? C.lavender : C.booked,
-                  color: selected && selectedSlot ? C.bg : C.bookedText,
-                  border: "none", borderRadius: "2px", fontSize: "0.6875rem",
-                  letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600,
-                  cursor: selected && selectedSlot ? "pointer" : "default",
-                  fontFamily: "'Instrument Sans', sans-serif",
-                  transition: "background 0.2s, color 0.2s",
-                }}
-              >
-                Continuar →
-              </button>
-            </div>
-          </>
-        )}
-
-        {/* ── STEP 3 — Datos de contacto ── */}
-        {step === 3 && (
-          <div style={{ maxWidth: "560px" }}>
-
-            {/* Selection summary */}
-            <div style={{
-              background: C.card, border: `1px solid ${C.border}`, borderRadius: "4px",
-              padding: "1.25rem 1.5rem", display: "flex", justifyContent: "space-between",
-              alignItems: "center", marginBottom: "2rem", gap: "1rem",
-            }}>
-              <div>
-                <p style={labelStyle}>Tu selección</p>
-                <p style={{ color: C.fg, margin: "0.4rem 0 0", fontFamily: "'Fraunces', Georgia, serif", fontSize: "1rem", fontWeight: 300 }}>
-                  {SERVICE_LABELS[bookingType]}
-                </p>
-                <p style={{ color: C.muted, fontSize: "0.8rem", margin: "0.2rem 0 0" }}>
-                  {selected?.split("-").reverse().join("/")} · {selectedSlot}
-                </p>
-              </div>
-              <button onClick={() => setStep(2)}
-                style={{ background: "none", border: "none", color: C.muted, fontSize: "0.7rem", cursor: "pointer", letterSpacing: "0.08em", textTransform: "uppercase" }}
-              >
-                Editar
-              </button>
+            <div>
+              <label htmlFor="booking-email" style={labelStyle}>
+                Correo Electrónico
+              </label>
+              <input
+                id="booking-email"
+                type="email"
+                required
+                style={inputStyle}
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+              />
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              {/* Name field */}
-              <div>
-                <label htmlFor="booking-name" style={{ ...labelStyle, display: "block", marginBottom: "0.5rem" }}>
-                  Nombre completo
-                </label>
-                <input
-                  id="booking-name" type="text" required
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Tu nombre"
-                  disabled={isSubmitting}
-                  style={{
-                    width: "100%", padding: "0.75rem 1rem", boxSizing: "border-box",
-                    background: C.card, border: `1px solid ${C.border}`,
-                    borderRadius: "3px", color: C.fg,
-                    fontSize: "0.875rem", fontFamily: "'Instrument Sans', sans-serif", outline: "none",
-                    opacity: isSubmitting ? 0.6 : 1,
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = C.lavender)}
-                  onBlur={e => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
+            <div>
+              <label htmlFor="booking-phone" style={labelStyle}>
+                WhatsApp
+              </label>
+              <input
+                id="booking-phone"
+                type="tel"
+                required
+                style={inputStyle}
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+              />
+            </div>
 
-              {/* WhatsApp field */}
-              <div>
-                <label htmlFor="booking-email" style={{ ...labelStyle, display: "block", marginBottom: "0.5rem" }}>
-                  WhatsApp
-                </label>
-                <input
-                  id="booking-email" type="tel" required
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="+57 300 123 4567"
-                  disabled={isSubmitting}
-                  style={{
-                    width: "100%", padding: "0.75rem 1rem", boxSizing: "border-box",
-                    background: C.card, border: `1px solid ${C.border}`,
-                    borderRadius: "3px", color: C.fg,
-                    fontSize: "0.875rem", fontFamily: "'Instrument Sans', sans-serif", outline: "none",
-                    opacity: isSubmitting ? 0.6 : 1,
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = C.lavender)}
-                  onBlur={e => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
+            <div>
+              <label htmlFor="booking-idea" style={labelStyle}>
+                Idea del Diseño / Detalles
+              </label>
+              <textarea
+                id="booking-idea"
+                rows={3}
+                style={{ ...inputStyle, resize: "vertical" }}
+                value={clientIdea}
+                onChange={(e) => setClientIdea(e.target.value)}
+              />
+            </div>
 
-              {/* Idea / notes */}
-              <div>
-                <label htmlFor="booking-idea" style={{ ...labelStyle, display: "block", marginBottom: "0.5rem" }}>
-                  Ideas / Referencias <span style={{ color: C.bookedText }}>(opcional)</span>
-                </label>
-                <textarea
-                  id="booking-idea" rows={4}
-                  value={form.idea}
-                  onChange={e => setForm(f => ({ ...f, idea: e.target.value }))}
-                  placeholder="Cuéntame sobre tu idea, zona del cuerpo, tamaño aproximado..."
-                  disabled={isSubmitting}
-                  style={{
-                    width: "100%", padding: "0.75rem 1rem", boxSizing: "border-box",
-                    background: C.card, border: `1px solid ${C.border}`,
-                    borderRadius: "3px", color: C.fg,
-                    fontSize: "0.875rem", fontFamily: "'Instrument Sans', sans-serif",
-                    outline: "none", resize: "vertical",
-                    opacity: isSubmitting ? 0.6 : 1,
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = C.lavender)}
-                  onBlur={e => (e.currentTarget.style.borderColor = C.border)}
-                />
-              </div>
-
-              <p style={{ color: C.muted, fontSize: "0.75rem", lineHeight: 1.6 }}>
-                Esta solicitud no confirma la reserva. Te enviaré confirmación por WhatsApp
-                con los detalles finales y el depósito requerido.
+            {error && <p style={{ color: "#ff5555", fontSize: "0.875rem" }}>{error}</p>}
+            {success && (
+              <p style={{ color: "#50fa7b", fontSize: "0.875rem" }}>
+                ¡Reserva registrada con éxito! Te estamos redirigiendo a WhatsApp...
               </p>
+            )}
 
-              {/* Server error feedback */}
-              {submitError && (
-                <p style={{ color: C.error, fontSize: "0.8rem", lineHeight: 1.5 }}>
-                  ⚠ {submitError}
-                </p>
-              )}
-
-              {/* Navigation */}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <button type="button" onClick={() => setStep(2)} disabled={isSubmitting}
-                  style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, padding: "0.75rem 1.5rem", borderRadius: "2px", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", cursor: isSubmitting ? "default" : "pointer", fontFamily: "'Instrument Sans', sans-serif", opacity: isSubmitting ? 0.5 : 1 }}
-                >
-                  ← Volver
-                </button>
-                <button type="submit" disabled={isSubmitting}
-                  style={{
-                    padding: "0.75rem 2rem",
-                    background: isSubmitting ? C.booked : C.lavender,
-                    color: isSubmitting ? C.bookedText : C.bg,
-                    border: "none", borderRadius: "2px", fontSize: "0.6875rem",
-                    letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 600,
-                    cursor: isSubmitting ? "default" : "pointer",
-                    fontFamily: "'Instrument Sans', sans-serif",
-                    transition: "background 0.2s, color 0.2s",
-                    display: "flex", alignItems: "center", gap: "0.5rem",
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span style={{
-                        width: 12, height: 12, border: `2px solid ${C.bookedText}`,
-                        borderTopColor: "transparent", borderRadius: "50%",
-                        display: "inline-block", animation: "spin 0.7s linear infinite",
-                      }} />
-                      Enviando…
-                    </>
-                  ) : (
-                    "Enviar solicitud"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                padding: "0.85rem",
+                borderRadius: "0.5rem",
+                border: "none",
+                backgroundColor: "#9d4edd",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                cursor: loading ? "wait" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                boxShadow: "0 4px 14px rgba(157, 78, 221, 0.4)",
+                transition: "all 0.2s ease",
+                marginTop: "0.5rem",
+              }}
+            >
+              {loading ? "Procesando..." : "Confirmar y Continuar en WhatsApp"}
+            </button>
+          </form>
         )}
       </div>
-
-      {/* Inline keyframe animations */}
-      <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
-      `}</style>
     </div>
   );
-}
+};
+
+export default BookingComponent;
