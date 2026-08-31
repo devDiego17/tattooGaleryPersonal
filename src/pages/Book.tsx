@@ -72,11 +72,14 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
 
     setCalendarLoading(true);
     try {
+      // 1. Intentar endpoint de mes
       const res = await fetch(`${appsScriptUrl}?action=month_availability&month=${yearMonth}`, { signal });
-      if (!res.ok) throw new Error("Error al consultar disponibilidad");
-      const data = await res.json();
-      if (data.busyDates && Array.isArray(data.busyDates)) {
-        setBusyDates(data.busyDates);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.busyDates && Array.isArray(data.busyDates)) {
+          setBusyDates(data.busyDates);
+          return;
+        }
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {

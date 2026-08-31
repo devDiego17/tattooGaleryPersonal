@@ -1,16 +1,26 @@
 // Google Apps Script — Code.gs
 // ─────────────────────────────────────────────────────────────────────────────
-// INSTRUCCIONES DE DEPLOY:
+// INSTRUCCIONES DE INSTALACIÓN / ACTUALIZACIÓN:
 //
-// 1. Ve a https://script.google.com → Abre tu proyecto existente
-// 2. Reemplaza el código en Code.gs por este
-// 3. Guarda (Ctrl+S)
-// 4. Clic en "Implementar > Administrar implementaciones > Editar > Nueva versión"
-// 5. Clic en Implementar
+// 1. Ve a https://script.google.com y abre tu proyecto.
+// 2. Reemplaza TODO el código de Code.gs con este archivo.
+// 3. Guarda los cambios (Ctrl + S).
+// 4. IMPORTANTE PARA PUBLICAR:
+//    - Clic en "Implementar" (arriba a la derecha) → "Administrar implementaciones"
+//    - Clic en el icono de lápiz (Editar)
+//    - En "Versión", selecciona "Nueva versión"
+//    - Clic en "Implementar"
 // ─────────────────────────────────────────────────────────────────────────────
 
-var CALENDAR_ID = "primary"; // o el ID específico del calendario
+var CALENDAR_ID = "primary"; // "primary" usa el calendario principal de tu cuenta
 var TIMEZONE = "America/Bogota"; // UTC-5
+
+function getCalendar() {
+  if (CALENDAR_ID === "primary") {
+    return CalendarApp.getDefaultCalendar();
+  }
+  return CalendarApp.getCalendarById(CALENDAR_ID) || CalendarApp.getDefaultCalendar();
+}
 
 // ── CORS helper ───────────────────────────────────────────────────────────────
 function corsOutput(data) {
@@ -22,92 +32,86 @@ function corsOutput(data) {
 // ── doGet — disponibilidad ────────────────────────────────────────────────────
 function doGet(e) {
   try {
-    var action = e.parameter.action;
+    var params = e ? e.parameter : {};
+    var action = params.action;
 
-    // Disponibilidad por mes completo (para pintar el calendario con días ocupados)
-    if (action === "month_availability") {
-      var month = e.parameter.month; // "YYYY-MM"
-      if (!month) return corsOutput({ error: "Parámetro 'month' requerido", busyDates: [] });
-      return corsOutput(getMonthAvailability(month));
+    // 1. Disponibilidad de todo el mes
+    if (action === "month_availability" || params.month) {
+      var month = params.month; // "YYYY-MM"
+      if (!month && params.date) {
+        month = params.date.substring(0, 7);
+      }
+      return corsOutput(getMonthAvailability(month || "2026-09"));
     }
 
-    // Disponibilidad por día específico
-    if (action === "availability") {
-      var date = e.parameter.date; // "YYYY-MM-DD"
+    // 2. Disponibilidad de un día específico
+    if (action === "availability" || params.date) {
+      var date = params.date; // "YYYY-MM-DD"
       if (!date) return corsOutput({ error: "Parámetro 'date' requerido", isAvailable: true, busyDates: [] });
       return corsOutput(getDayAvailability(date));
     }
 
-    return corsOutput({ error: "Acción desconocida" });
+    return corsOutput({ error: "Acción desconocida", isAvailable: true, busyDates: [] });
   } catch (err) {
-    return corsOutput({ error: err.message, isAvailable: false });
+    return corsOutput({ error: err.toString(), isAvailable: true, busyDates: [] });
   }
 }
 
 // ── doPost — crear reserva ────────────────────────────────────────────────────
 function doPost(e) {
   try {
-    var body = JSON.parse(e.postData.contents);
+    var contents = e && e.postData ? e.postData.contents : "{}";
+    var body = JSON.parse(contents);
 
-    if (body.action === "book") {
+    if (body.action === "book" || body.date) {
       return corsOutput(createBooking(body));
     }
 
     return corsOutput({ ok: false, error: "Acción desconocida" });
   } catch (err) {
-    return corsOutput({ ok: false, error: err.message });
+    return corsOutput({ ok: false, error: err.toString() });
   }
 }
 
 // ── getDayAvailability ────────────────────────────────────────────────────────
 function getDayAvailability(date) {
-  // Rango completo del día en Bogotá (UTC-5)
+  var cal = getCalendar();
+  
+  // Rango del día completo en horario local
   var dayStart = new Date(date + "T00:00:00-05:00");
   var dayEnd   = new Date(date + "T23:59:59-05:00");
 
-  var events = Calendar.Events.list(CALENDAR_ID, {
-    timeMin: dayStart.toISOString(),
-    timeMax: dayEnd.toISOString(),
-    singleEvents: true,
-  });
-
-  var hasEvents = (events.items || []).some(function(ev) {
-    return ev.status !== "cancelled";
-  });
+  var events = cal.getEvents(dayStart, dayEnd);
+  var isBusy = events.length > 0;
 
   return {
     date: date,
-    isAvailable: !hasEvents,
-    busy: hasEvents,
-    busySlots: hasEvents ? ["ALL_DAY"] : []
+    isAvailable: !isBusy,
+    busy: isBusy,
+    busySlots: isBusy ? ["ALL_DAY"] : [],
+    eventsCount: events.length
   };
 }
 
 // ── getMonthAvailability ──────────────────────────────────────────────────────
 function getMonthAvailability(yearMonth) {
+  var cal = getCalendar();
   var parts = yearMonth.split("-");
   var year = parseInt(parts[0], 10);
   var month = parseInt(parts[1], 10); // 1-12
 
-  var startStr = yearMonth + "-01T00:00:00-05:00";
   var lastDay = new Date(year, month, 0).getDate();
-  var endStr = yearMonth + "-" + (lastDay < 10 ? "0" + lastDay : lastDay) + "T23:59:59-05:00";
+  var start = new Date(yearMonth + "-01T00:00:00-05:00");
+  var end   = new Date(yearMonth + "-" + (lastDay < 10 ? "0" + lastDay : lastDay) + "T23:59:59-05:00");
 
-  var events = Calendar.Events.list(CALENDAR_ID, {
-    timeMin: new Date(startStr).toISOString(),
-    timeMax: new Date(endStr).toISOString(),
-    singleEvents: true,
-  });
-
+  var events = cal.getEvents(start, end);
   var busyDatesSet = {};
-  (events.items || []).forEach(function(ev) {
-    if (ev.status === "cancelled") return;
 
-    var start = ev.start.dateTime || ev.start.date;
-    if (start) {
-      var dateKey = start.substring(0, 10); // "YYYY-MM-DD"
-      busyDatesSet[dateKey] = true;
-    }
+  events.forEach(function(ev) {
+    var evStart = ev.getStartTime();
+    // Formatear a YYYY-MM-DD en timezone Bogotá
+    var dateStr = Utilities.formatDate(evStart, TIMEZONE, "yyyy-MM-dd");
+    busyDatesSet[dateStr] = true;
   });
 
   return {
@@ -118,15 +122,16 @@ function getMonthAvailability(yearMonth) {
 
 // ── createBooking ─────────────────────────────────────────────────────────────
 function createBooking(data) {
+  var cal = getCalendar();
   var service = data.service || "tattoo_session";
   var date    = data.date; // "YYYY-MM-DD"
-  var name    = data.name;
-  var email   = data.email;
+  var name    = data.name || "Cliente";
+  var email   = data.email || "";
   var phone   = data.phone || "";
   var idea    = data.idea || "Sin detalles adicionales";
 
   if (!date) {
-    return { ok: false, error: "La fecha es requerida" };
+    return { ok: false, error: "La fecha es requerida." };
   }
 
   // VALIDACIÓN DE SEGURIDAD: Verificar que el día sigue libre antes de reservar
@@ -147,20 +152,23 @@ function createBooking(data) {
   var startDT = new Date(date + "T10:00:00-05:00");
   var endDT   = new Date(date + "T18:00:00-05:00");
 
-  var event = {
-    summary:     "[PENDIENTE] " + label + " — " + name,
-    description: "Servicio: " + label + "\n" +
-                 "Cliente: "  + name  + "\n" +
-                 "WhatsApp: " + (phone || email) + "\n" +
-                 "Email: "    + email + "\n" +
-                 "Idea: "     + idea  + "\n" +
-                 "Modalidad: Jornada Completa (Día Exclusivo)",
-    start: { dateTime: startDT.toISOString(), timeZone: TIMEZONE },
-    end:   { dateTime: endDT.toISOString(),   timeZone: TIMEZONE },
-    colorId: "5", // amarillo = pendiente de confirmar
-    status: "tentative",
-  };
+  var title = "[PENDIENTE] " + label + " — " + name;
+  var description = "Servicio: " + label + "\n" +
+                    "Cliente: "  + name  + "\n" +
+                    "WhatsApp: " + (phone || email) + "\n" +
+                    "Email: "    + email + "\n" +
+                    "Idea / Detalles: " + idea + "\n\n" +
+                    "Modalidad: Jornada Completa (Día Exclusivo)";
 
-  var created = Calendar.Events.insert(event, CALENDAR_ID);
-  return { ok: true, eventId: created.id };
+  var event = cal.createEvent(title, startDT, endDT, {
+    description: description
+  });
+
+  try {
+    event.setColor(CalendarApp.EventColor.YELLOW);
+  } catch (e) {
+    // Ignorar si el color no está soportado en este entorno
+  }
+
+  return { ok: true, eventId: event.getId() };
 }

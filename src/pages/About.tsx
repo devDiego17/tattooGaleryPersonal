@@ -30,103 +30,54 @@ export default function About() {
   const influences = ["Arte precolombino", "Grabado japonés", "Cultura visual colombiana", "Diseño editorial", "Botánica", "Anatomía"];
 
   return (
-    <div style={{ paddingTop: "72px" }}>
+    <div className="pt-16 md:pt-20 w-full overflow-hidden">
       {/* Hero */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          minHeight: "70vh",
-          borderBottom: "1px solid #221F2C",
-        }}
-      >
-        <div
-          style={{
-            padding: "clamp(3rem, 6vw, 6rem)",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-          }}
-        >
-          <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", margin: 0, marginBottom: "2.5rem" }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 min-h-[60vh] md:min-h-[70vh] border-b border-[#221F2C]">
+        <div className="px-6 py-12 sm:px-10 sm:py-16 md:p-14 lg:p-20 flex flex-col justify-center md:justify-end order-2 md:order-1">
+          <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-6">
             Sobre mí
           </p>
-          <h1
-            style={{
-              fontFamily: "'Fraunces', Georgia, serif",
-              fontSize: "clamp(3rem, 6vw, 5.5rem)",
-              fontWeight: 300,
-              letterSpacing: "-0.02em",
-              color: "#EDE8DF",
-              margin: 0,
-              marginBottom: "2rem",
-              lineHeight: 0.92,
-            }}
-          >
+          <h1 className="font-['Fraunces',Georgia,serif] text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-[#EDE8DF] m-0 mb-6 leading-[0.95]">
             Diego
             <br />
-            <em style={{ fontStyle: "italic" }}>Patiño</em>
+            <em className="italic">Patiño</em>
           </h1>
-          <p
-            style={{
-              fontFamily: "'Instrument Sans', sans-serif",
-              fontSize: "clamp(0.9375rem, 1.5vw, 1.0625rem)",
-              lineHeight: 1.75,
-              color: "#6A6575",
-              maxWidth: "46ch",
-            }}
-          >
+          <p className="font-['Instrument_Sans',sans-serif] text-[0.9375rem] sm:text-base leading-relaxed text-[#6A6575] max-w-[46ch]">
             Artista y tatuador multidisciplinario radicado en Medellín. El trabajo cruza el tatuaje, la ilustración, el diseño y la pintura con una misma pregunta de fondo: qué puede hacer una imagen.
           </p>
         </div>
 
-        <div style={{ backgroundColor: "#13111A", overflow: "hidden" }}>
+        <div className="bg-[#13111A] overflow-hidden order-1 md:order-2 h-[320px] sm:h-[420px] md:h-auto min-h-full">
           <img
             src="/rostro.jpg"
             alt="Diego Patiño"
-            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+            className="w-full h-full object-cover object-top"
           />
         </div>
       </div>
 
       {/* Disciplines + Influences */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          borderBottom: "1px solid #221F2C",
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 border-b border-[#221F2C]">
         {[
           { label: "Disciplinas", items: disciplines },
           { label: "Influencias", items: influences },
         ].map(({ label, items }, i) => (
           <div
             key={label}
-            style={{
-              padding: "clamp(2.5rem, 5vw, 5rem)",
-              borderRight: i === 0 ? "1px solid #221F2C" : "none",
-            }}
+            className={`p-6 sm:p-10 md:p-14 lg:p-20 ${
+              i === 0 ? "border-b md:border-b-0 md:border-r border-[#221F2C]" : ""
+            }`}
           >
-            <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", margin: 0, marginBottom: "2rem" }}>
+            <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-6">
               {label}
             </p>
-            <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <ul className="list-none m-0 p-0 flex flex-col gap-3">
               {items.map((item) => (
                 <li
                   key={item}
-                  style={{
-                    fontFamily: "'Fraunces', Georgia, serif",
-                    fontSize: "clamp(1.125rem, 2vw, 1.5rem)",
-                    fontWeight: 300,
-                    color: "#EDE8DF",
-                    letterSpacing: "-0.01em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "1rem",
-                  }}
+                  className="font-['Fraunces',Georgia,serif] text-lg sm:text-xl lg:text-2xl font-light text-[#EDE8DF] tracking-tight flex items-center gap-3"
                 >
-                  <span style={{ width: "20px", height: "1px", backgroundColor: "#3A3645", flexShrink: 0 }} />
+                  <span className="w-4 sm:w-5 h-px bg-[#3A3645] shrink-0" />
                   {item}
                 </li>
               ))}
@@ -136,79 +87,48 @@ export default function About() {
       </div>
 
       {/* Timeline */}
-      <div style={{ paddingInline: "clamp(1.5rem, 5vw, 4rem)", paddingBlock: "clamp(4rem, 8vw, 8rem)" }}>
-        <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", margin: 0, marginBottom: "5rem" }}>
+      <div className="px-6 sm:px-10 lg:px-16 py-16 sm:py-24 lg:py-32 max-w-6xl mx-auto">
+        <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-12 sm:mb-16">
           Recorrido
         </p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+        <div className="flex flex-col">
           {timeline.map((entry, i) => (
             <div
               key={entry.year}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "120px 1px 1fr",
-                gap: "0 3rem",
-                paddingBottom: i < timeline.length - 1 ? "5rem" : 0,
-              }}
+              className={`grid grid-cols-[55px_20px_1fr] sm:grid-cols-[85px_24px_1fr] md:grid-cols-[110px_32px_1fr] gap-x-3 sm:gap-x-6 md:gap-x-8 ${
+                i < timeline.length - 1 ? "pb-12 sm:pb-16 md:pb-20" : ""
+              }`}
             >
               {/* Year */}
-              <div style={{ textAlign: "right", paddingTop: "0.25rem" }}>
-                <span
-                  style={{
-                    fontFamily: "'Fraunces', Georgia, serif",
-                    fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
-                    fontWeight: 300,
-                    color: "#3A3645",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
+              <div className="text-right pt-1">
+                <span className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-4xl font-light text-[#4a4555] tracking-tight">
                   {entry.year}
                 </span>
               </div>
 
               {/* Timeline line */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: "1px", height: "12px", backgroundColor: "#ABA7E3" }} />
-                <div style={{ width: "5px", height: "5px", borderRadius: "50%", backgroundColor: "#ABA7E3", flexShrink: 0 }} />
+              <div className="flex flex-col items-center">
+                <div className="w-px h-3 bg-[#ABA7E3]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#ABA7E3] shrink-0 my-0.5" />
                 {i < timeline.length - 1 && (
-                  <div style={{ width: "1px", flex: 1, backgroundColor: "#221F2C" }} />
+                  <div className="w-px flex-1 bg-[#221F2C]" />
                 )}
               </div>
 
               {/* Content */}
-              <div>
-                <h3
-                  style={{
-                    fontFamily: "'Fraunces', Georgia, serif",
-                    fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
-                    fontWeight: 300,
-                    color: "#EDE8DF",
-                    margin: 0,
-                    marginBottom: "1rem",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
+              <div className="pt-0.5">
+                <h3 className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-3xl font-light text-[#EDE8DF] m-0 mb-3 tracking-tight">
                   {entry.title}
                 </h3>
-                <p
-                  style={{
-                    fontFamily: "'Instrument Sans', sans-serif",
-                    fontSize: "0.9375rem",
-                    lineHeight: 1.75,
-                    color: "#6A6575",
-                    margin: 0,
-                    marginBottom: "2rem",
-                    maxWidth: "56ch",
-                  }}
-                >
+                <p className="font-['Instrument_Sans',sans-serif] text-sm sm:text-base leading-relaxed text-[#6A6575] m-0 mb-6 max-w-xl">
                   {entry.text}
                 </p>
-                <div style={{ backgroundColor: "#13111A", aspectRatio: "16/9", maxWidth: "480px", overflow: "hidden" }}>
+                <div className="bg-[#13111A] aspect-video w-full max-w-md rounded-xs overflow-hidden border border-[#221F2C]/50">
                   <img
                     src={entry.image}
                     alt={entry.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    className="w-full h-full object-cover"
                   />
                 </div>
               </div>
@@ -218,34 +138,15 @@ export default function About() {
       </div>
 
       {/* Philosophy */}
-      <div
-        style={{
-          borderTop: "1px solid #221F2C",
-          paddingInline: "clamp(1.5rem, 5vw, 4rem)",
-          paddingBlock: "clamp(4rem, 8vw, 7rem)",
-          display: "grid",
-          gridTemplateColumns: "1fr 2fr",
-          gap: "5rem",
-          alignItems: "center",
-        }}
-      >
-        <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", margin: 0 }}>
+      <div className="border-t border-[#221F2C] px-6 sm:px-10 lg:px-16 py-16 sm:py-24 grid grid-cols-1 md:grid-cols-[1fr_2.5fr] gap-6 md:gap-16 items-start md:items-center max-w-6xl mx-auto">
+        <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0">
           Filosofía de trabajo
         </p>
-        <p
-          style={{
-            fontFamily: "'Fraunces', Georgia, serif",
-            fontSize: "clamp(1.375rem, 2.5vw, 2rem)",
-            fontWeight: 300,
-            lineHeight: 1.5,
-            letterSpacing: "-0.01em",
-            color: "#EDE8DF",
-            margin: 0,
-          }}
-        >
+        <blockquote className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-3xl font-light leading-snug text-[#EDE8DF] m-0 tracking-tight">
           "El tatuaje es la excusa para llegar al cuerpo. Lo que me interesa es la imagen, la idea que la genera, y la conversación que produce entre dos personas."
-        </p>
+        </blockquote>
       </div>
     </div>
   );
 }
+
