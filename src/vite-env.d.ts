@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
-path.resolve(import.meta.dirname, "./src")
+interface ImportMetaEnv {
+  readonly VITE_APPS_SCRIPT_URL?: string;
+  readonly VITE_WHATSAPP_NUMBER?: string;
+}
 
-import siteData from "./.figma/make/site.json" with { type: "json" };import siteData from "./.figma/make/site.json" with { type: "json" };
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
