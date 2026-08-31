@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { buildWhatsAppLink } from "../lib/Whatsapp.ts";
 
-// --- Constantes y Configuración ---
-const BASE_SLOTS = [
-  "10:00", "11:30", "13:00", "14:30", "16:00", "17:30"
-];
-
 const C = {
   bg: "#0d0d0d",
   card: "#171717",
@@ -37,13 +32,12 @@ const inputStyle: React.CSSProperties = {
 };
 
 interface BookingComponentProps {
-  bookingType: string; // e.g., 'tattoo_session' | 'consultation'
+  bookingType?: string; // e.g., 'tattoo_session' | 'consultation'
 }
 
-export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType }) => {
+export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType = "tattoo_session" }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedTime, setSelectedTime] = useState<string>("");
 
   // Form states
   const [clientName, setClientName] = useState("");
@@ -51,11 +45,9 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
   const [clientPhone, setClientPhone] = useState("");
   const [clientIdea, setClientIdea] = useState("");
 
-  // Status states
-  const [slots, setSlots] = useState<string[]>([]);
-  const [rawBusySlots, setRawBusySlots] = useState<string[]>([]);
-  const [slotsLoading, setSlotsLoading] = useState(false);
-  const [slotsError, setSlotsError] = useState<string | null>(null);
+  // Availability states
+  const [busyDates, setBusyDates] = useState<string[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,103 +63,103 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
 
-  // --- Lógica de Slots ---
-  const computeSlots = (busy: string[], type: string): string[] => {
-    // Si la sesión toma múltiples slots (ej. 3 slots continuos para tattoo)
-    const neededSlots = type === "tattoo_session" ? 3 : 1;
+  const monthKey = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}`;
 
-    return BASE_SLOTS.filter((_, idx) => {
-      for (let i = 0; i < neededSlots; i++) {
-        const checkSlot = BASE_SLOTS[idx + i];
-        if (!checkSlot || busy.includes(checkSlot)) {
-          return false;
-        }
+  // Consultar disponibilidad del mes completo desde Google Calendar / Apps Script
+  const loadMonthAvailability = useCallback(async (yearMonth: string, signal?: AbortSignal) => {
+    const appsScriptUrl = import.meta.env.VITE_APPS_SCRIPT_URL;
+    if (!appsScriptUrl) return;
+
+    setCalendarLoading(true);
+    try {
+      const res = await fetch(`${appsScriptUrl}?action=month_availability&month=${yearMonth}`, { signal });
+      if (!res.ok) throw new Error("Error al consultar disponibilidad");
+      const data = await res.json();
+      if (data.busyDates && Array.isArray(data.busyDates)) {
+        setBusyDates(data.busyDates);
       }
-      return true;
-    });
-  };
-
-  const fetchAvailability = async (date: string, options?: { signal?: AbortSignal }): Promise<string[]> => {
-    const res = await fetch(`${import.meta.env.VITE_APPS_SCRIPT_URL}?action=availability&date=${date}`, {
-      signal: options?.signal,
-    });
-    const data = await res.json();
-
-    // Tu Apps Script no devuelve `ok: true`, devuelve directamente { busySlots: [...] }
-    if (data.error) throw new Error(data.error);
-    return data.busySlots || [];
-  };
-
-  const loadSlots = useCallback(
-    async (date: string, signal?: AbortSignal) => {
-      setSlotsLoading(true);
-      setSlotsError(null);
-      setSlots([]);
-      try {
-        const busy = await fetchAvailability(date, { signal });
-        setRawBusySlots(busy);
-        setSlots(computeSlots(busy, bookingType));
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          setSlotsError(err instanceof Error ? err.message : "Error al cargar disponibilidad");
-        }
-      } finally {
-        setSlotsLoading(false);
+    } catch (err) {
+      if ((err as Error).name !== "AbortError") {
+        console.warn("[Book] Error cargando disponibilidad del mes:", err);
       }
-    },
-    [bookingType]
-  );
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!selectedDate) return;
     const controller = new AbortController();
-    loadSlots(selectedDate, controller.signal);
+    loadMonthAvailability(monthKey, controller.signal);
     return () => controller.abort();
-  }, [selectedDate, loadSlots]);
+  }, [monthKey, loadMonthAvailability]);
 
   const prevMonth = () => {
     setSelectedDate("");
-    setSelectedTime("");
     setCurrentDate(new Date(viewYear, viewMonth - 1, 1));
   };
 
   const nextMonth = () => {
     setSelectedDate("");
-    setSelectedTime("");
     setCurrentDate(new Date(viewYear, viewMonth + 1, 1));
+  };
+
+  // Formatear fecha para mostrar
+  const formatSelectedDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    const [y, m, d] = dateStr.split("-");
+    const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    return dateObj.toLocaleDateString("es-ES", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
   // --- Submit de la reserva ---
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedDate) {
+      setError("Por favor selecciona un día disponible en el calendario.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch(import.meta.env.VITE_APPS_SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "book",
-          service: bookingType,
-          date: selectedDate,
-          time: selectedTime,
-          name: clientName,
-          email: clientEmail,
-          phone: clientPhone,
-          idea: clientIdea,
-        }),
-      });
+    const appsScriptUrl = import.meta.env.VITE_APPS_SCRIPT_URL;
 
-      const result = await response.json();
+    try {
+      let result = { ok: true, eventId: "mock-id" };
+
+      if (appsScriptUrl) {
+        const response = await fetch(appsScriptUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            action: "book",
+            service: bookingType,
+            date: selectedDate,
+            name: clientName,
+            email: clientEmail,
+            phone: clientPhone,
+            idea: clientIdea,
+          }),
+        });
+
+        result = await response.json();
+      }
 
       if (result.ok) {
+        // Bloquear el día localmente de inmediato
+        setBusyDates((prev) => [...prev, selectedDate]);
+
         // 1. Prepara el enlace con los datos del formulario
         const waUrl = buildWhatsAppLink({
           service: bookingType,
           date: selectedDate,
-          time: selectedTime,
           name: clientName,
-          email: clientEmail,
+          email: clientPhone || clientEmail,
           idea: clientIdea,
         });
 
@@ -178,17 +170,18 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
         setSuccess(true);
       } else {
         setError(result.error || "No se pudo procesar la reserva.");
+        // Refrescar disponibilidad por si el día fue tomado
+        loadMonthAvailability(monthKey);
       }
     } catch (err) {
-      setError("Error de red al conectar con el servidor.");
+      setError("Error de red al conectar con el servidor de reservas.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
-    //estilos de calendario de citas y formularios
+    // estilos de calendario de citas y formularios
     <div
       style={{
         minHeight: "100vh",
@@ -206,7 +199,7 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
       <div
         style={{
           width: "100%",
-          maxWidth: "460px",
+          maxWidth: "480px",
           backgroundColor: "#13091f",
           border: "1px solid #2d1847",
           borderRadius: "1.25rem",
@@ -219,16 +212,26 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
             fontSize: "1.5rem",
             fontWeight: 700,
             color: "#ffffff",
-            marginBottom: "1.75rem",
+            marginBottom: "0.5rem",
             textAlign: "center",
             letterSpacing: "0.5px",
           }}
         >
-          Reservar Agenda
+          Reservar Cita
         </h2>
+        <p
+          style={{
+            fontSize: "0.8125rem",
+            color: "#a677ca",
+            textAlign: "center",
+            marginBottom: "1.75rem",
+          }}
+        >
+          Atención exclusiva: 1 cliente por día (Jornada completa)
+        </p>
 
         {/* Calendario */}
-        <div style={{ marginBottom: "2rem" }}>
+        <div style={{ marginBottom: "1.75rem" }}>
           <div
             style={{
               display: "flex",
@@ -290,25 +293,43 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
 
               const isPast = cellDate.getTime() < todayNormalized.getTime();
               const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const isBusy = busyDates.includes(dateStr);
               const isSelected = selectedDate === dateStr;
+              const isDisabled = isPast || isBusy;
 
               return (
                 <button
                   key={day}
                   type="button"
-                  disabled={isPast}
+                  disabled={isDisabled}
                   onClick={() => {
                     setSelectedDate(dateStr);
-                    setSelectedTime("");
+                    setError(null);
                   }}
+                  title={isBusy ? "Día ocupado / No disponible" : isPast ? "Fecha pasada" : "Día disponible"}
                   style={{
                     padding: "0.55rem 0",
                     borderRadius: "0.5rem",
-                    border: isSelected ? "1px solid #e0aaff" : "1px solid transparent",
-                    backgroundColor: isSelected ? "#9d4edd" : "transparent",
-                    color: isSelected ? "#ffffff" : isPast ? "#3c2856" : "#ffffff",
+                    border: isSelected
+                      ? "1px solid #e0aaff"
+                      : isBusy
+                      ? "1px solid #2d1847"
+                      : "1px solid transparent",
+                    backgroundColor: isSelected
+                      ? "#9d4edd"
+                      : isBusy
+                      ? "rgba(45, 24, 71, 0.4)"
+                      : "transparent",
+                    color: isSelected
+                      ? "#ffffff"
+                      : isBusy
+                      ? "#4a3560"
+                      : isPast
+                      ? "#3c2856"
+                      : "#ffffff",
                     fontWeight: isSelected ? "bold" : "normal",
-                    cursor: isPast ? "not-allowed" : "pointer",
+                    textDecoration: isBusy ? "line-through" : "none",
+                    cursor: isDisabled ? "not-allowed" : "pointer",
                     transition: "all 0.2s ease",
                   }}
                 >
@@ -317,47 +338,53 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
               );
             })}
           </div>
-        </div>
 
-        {/* Horarios Disponibles */}
-        {selectedDate && (
-          <div style={{ marginBottom: "2rem" }}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#e0aaff", marginBottom: "0.85rem" }}>
-              Horarios disponibles
-            </h3>
-            {slotsLoading && <p style={{ color: "#e0aaff", fontSize: "0.875rem" }}>Cargando disponibilidad...</p>}
-            {slotsError && <p style={{ color: "#ff5555", fontSize: "0.875rem" }}>{slotsError}</p>}
-            {!slotsLoading && !slotsError && slots.length === 0 && (
-              <p style={{ color: "#e0aaff", fontSize: "0.875rem" }}>No hay espacios libres para este día.</p>
-            )}
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.6rem" }}>
-              {slots.map((time) => (
-                <button
-                  key={time}
-                  type="button"
-                  onClick={() => setSelectedTime(time)}
-                  style={{
-                    padding: "0.6rem",
-                    borderRadius: "0.5rem",
-                    border: `1px solid ${selectedTime === time ? "#c77dff" : "#2d1847"}`,
-                    backgroundColor: selectedTime === time ? "#9d4edd" : "transparent",
-                    color: "#ffffff",
-                    fontWeight: selectedTime === time ? 700 : 400,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  {time}
-                </button>
-              ))}
+          {/* Leyenda de estados */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "1.25rem",
+              marginTop: "1rem",
+              fontSize: "0.75rem",
+              color: "#a677ca",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#ffffff" }} />
+              <span>Disponible</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#9d4edd" }} />
+              <span>Seleccionado</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+              <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#4a3560" }} />
+              <span>Ocupado</span>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Formulario de Confirmación */}
-        {selectedTime && (
+        {/* Formulario directo al seleccionar fecha */}
+        {selectedDate ? (
           <form onSubmit={handleConfirmBooking} style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            <div
+              style={{
+                backgroundColor: "rgba(157, 78, 221, 0.15)",
+                border: "1px solid #9d4edd",
+                borderRadius: "0.5rem",
+                padding: "0.75rem 1rem",
+                textAlign: "center",
+              }}
+            >
+              <span style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.08em", color: "#e0aaff", display: "block", marginBottom: "0.25rem" }}>
+                Fecha elegida
+              </span>
+              <strong style={{ fontSize: "0.95rem", color: "#ffffff", textTransform: "capitalize" }}>
+                {formatSelectedDate(selectedDate)}
+              </strong>
+            </div>
+
             <div>
               <label htmlFor="booking-name" style={labelStyle}>
                 Nombre Completo
@@ -369,6 +396,7 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
                 style={inputStyle}
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
+                placeholder="Tu nombre y apellido"
               />
             </div>
 
@@ -383,6 +411,7 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
                 style={inputStyle}
                 value={clientEmail}
                 onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="ejemplo@correo.com"
               />
             </div>
 
@@ -397,12 +426,13 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
                 style={inputStyle}
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="+57 300 000 0000"
               />
             </div>
 
             <div>
               <label htmlFor="booking-idea" style={labelStyle}>
-                Idea del Diseño / Detalles
+                Idea del Diseño / Zona del cuerpo / Tamaño
               </label>
               <textarea
                 id="booking-idea"
@@ -410,14 +440,39 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
                 style={{ ...inputStyle, resize: "vertical" }}
                 value={clientIdea}
                 onChange={(e) => setClientIdea(e.target.value)}
+                placeholder="Cuéntame sobre el estilo, tamaño aproximado y zona del cuerpo..."
               />
             </div>
 
-            {error && <p style={{ color: "#ff5555", fontSize: "0.875rem" }}>{error}</p>}
+            {error && (
+              <div
+                style={{
+                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  border: "1px solid #ef4444",
+                  borderRadius: "0.5rem",
+                  padding: "0.75rem",
+                  color: "#ff8080",
+                  fontSize: "0.875rem",
+                }}
+              >
+                {error}
+              </div>
+            )}
+
             {success && (
-              <p style={{ color: "#50fa7b", fontSize: "0.875rem" }}>
-                ¡Reserva registrada con éxito! Te estamos redirigiendo a WhatsApp...
-              </p>
+              <div
+                style={{
+                  backgroundColor: "rgba(34, 197, 94, 0.15)",
+                  border: "1px solid #22c55e",
+                  borderRadius: "0.5rem",
+                  padding: "0.75rem",
+                  color: "#50fa7b",
+                  fontSize: "0.875rem",
+                  textAlign: "center",
+                }}
+              >
+                ¡Día reservado con éxito! Redirigiendo a WhatsApp para ultimar detalles...
+              </div>
             )}
 
             <button
@@ -438,13 +493,25 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
                 marginTop: "0.5rem",
               }}
             >
-              {loading ? "Procesando..." : "Confirmar y Continuar en WhatsApp"}
+              {loading ? "Procesando reserva..." : "Confirmar Reserva y Continuar en WhatsApp"}
             </button>
           </form>
+        ) : (
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "#6A6575",
+              textAlign: "center",
+              padding: "1rem 0",
+              borderTop: "1px solid #2d1847",
+            }}
+          >
+            Selecciona un día disponible en el calendario para continuar con tu reserva.
+          </p>
         )}
       </div>
     </div>
   );
 };
 
-export default BookingComponent;
+export default BookingComponent;

@@ -2,28 +2,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // INSTRUCCIONES DE DEPLOY:
 //
-// 1. Ve a https://script.google.com → Nuevo proyecto
-// 2. Pega este código completo en Code.gs
-// 3. Guarda (Ctrl+S) y selecciona "Ejecutar > doGet" para autorizar permisos
-//    del calendario (acepta todos los permisos de Google Calendar)
-// 4. Clic en "Implementar > Nueva implementación"
-//    - Tipo: Aplicación web
-//    - Ejecutar como: Yo (diego@...)
-//    - Quién tiene acceso: Cualquier usuario
-// 5. Copia la URL generada (termina en /exec)
-// 6. Pégala en tu .env.local como VITE_APPS_SCRIPT_URL=<URL>
+// 1. Ve a https://script.google.com → Abre tu proyecto existente
+// 2. Reemplaza el código en Code.gs por este
+// 3. Guarda (Ctrl+S)
+// 4. Clic en "Implementar > Administrar implementaciones > Editar > Nueva versión"
+// 5. Clic en Implementar
 // ─────────────────────────────────────────────────────────────────────────────
 
 var CALENDAR_ID = "primary"; // o el ID específico del calendario
 var TIMEZONE = "America/Bogota"; // UTC-5
-var BASE_SLOTS = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30"];
-
-// Duración en minutos por servicio (para calcular el fin del evento)
-var SERVICE_DURATION = {
-  tattoo_session: 180,        // 3 horas mínimo
-  design_consultation: 60,    // 1 hora
-  flash_day: 90,              // 1.5 horas
-};
 
 // ── CORS helper ───────────────────────────────────────────────────────────────
 function corsOutput(data) {
@@ -37,15 +24,23 @@ function doGet(e) {
   try {
     var action = e.parameter.action;
 
+    // Disponibilidad por mes completo (para pintar el calendario con días ocupados)
+    if (action === "month_availability") {
+      var month = e.parameter.month; // "YYYY-MM"
+      if (!month) return corsOutput({ error: "Parámetro 'month' requerido", busyDates: [] });
+      return corsOutput(getMonthAvailability(month));
+    }
+
+    // Disponibilidad por día específico
     if (action === "availability") {
       var date = e.parameter.date; // "YYYY-MM-DD"
-      if (!date) return corsOutput({ error: "Parámetro 'date' requerido", busySlots: [] });
-      return corsOutput(getAvailability(date));
+      if (!date) return corsOutput({ error: "Parámetro 'date' requerido", isAvailable: true, busyDates: [] });
+      return corsOutput(getDayAvailability(date));
     }
 
     return corsOutput({ error: "Acción desconocida" });
   } catch (err) {
-    return corsOutput({ error: err.message, busySlots: [] });
+    return corsOutput({ error: err.message, isAvailable: false });
   }
 }
 
@@ -64,8 +59,8 @@ function doPost(e) {
   }
 }
 
-// ── getAvailability ───────────────────────────────────────────────────────────
-function getAvailability(date) {
+// ── getDayAvailability ────────────────────────────────────────────────────────
+function getDayAvailability(date) {
   // Rango completo del día en Bogotá (UTC-5)
   var dayStart = new Date(date + "T00:00:00-05:00");
   var dayEnd   = new Date(date + "T23:59:59-05:00");
@@ -74,58 +69,92 @@ function getAvailability(date) {
     timeMin: dayStart.toISOString(),
     timeMax: dayEnd.toISOString(),
     singleEvents: true,
-    orderBy: "startTime",
   });
 
-  var calEvents = (events.items || []).filter(function(ev) {
-    return ev.start && ev.start.dateTime; // excluir eventos de día completo
+  var hasEvents = (events.items || []).some(function(ev) {
+    return ev.status !== "cancelled";
   });
 
-  var busySlots = [];
+  return {
+    date: date,
+    isAvailable: !hasEvents,
+    busy: hasEvents,
+    busySlots: hasEvents ? ["ALL_DAY"] : []
+  };
+}
 
-  BASE_SLOTS.forEach(function(slot) {
-    var slotStart = new Date(date + "T" + slot + ":00-05:00");
-    var slotEnd   = new Date(slotStart.getTime() + 90 * 60 * 1000); // ventana de 1.5h
+// ── getMonthAvailability ──────────────────────────────────────────────────────
+function getMonthAvailability(yearMonth) {
+  var parts = yearMonth.split("-");
+  var year = parseInt(parts[0], 10);
+  var month = parseInt(parts[1], 10); // 1-12
 
-    var isBusy = calEvents.some(function(ev) {
-      var evStart = new Date(ev.start.dateTime);
-      var evEnd   = new Date(ev.end.dateTime);
-      // Solapamiento: el evento empieza antes de que termine el slot Y termina después de que empieza
-      return evStart < slotEnd && evEnd > slotStart;
-    });
+  var startStr = yearMonth + "-01T00:00:00-05:00";
+  var lastDay = new Date(year, month, 0).getDate();
+  var endStr = yearMonth + "-" + (lastDay < 10 ? "0" + lastDay : lastDay) + "T23:59:59-05:00";
 
-    if (isBusy) busySlots.push(slot);
+  var events = Calendar.Events.list(CALENDAR_ID, {
+    timeMin: new Date(startStr).toISOString(),
+    timeMax: new Date(endStr).toISOString(),
+    singleEvents: true,
   });
 
-  return { busySlots: busySlots };
+  var busyDatesSet = {};
+  (events.items || []).forEach(function(ev) {
+    if (ev.status === "cancelled") return;
+
+    var start = ev.start.dateTime || ev.start.date;
+    if (start) {
+      var dateKey = start.substring(0, 10); // "YYYY-MM-DD"
+      busyDatesSet[dateKey] = true;
+    }
+  });
+
+  return {
+    month: yearMonth,
+    busyDates: Object.keys(busyDatesSet)
+  };
 }
 
 // ── createBooking ─────────────────────────────────────────────────────────────
 function createBooking(data) {
-  var service = data.service;
-  var date    = data.date;
-  var time    = data.time;
+  var service = data.service || "tattoo_session";
+  var date    = data.date; // "YYYY-MM-DD"
   var name    = data.name;
   var email   = data.email;
+  var phone   = data.phone || "";
   var idea    = data.idea || "Sin detalles adicionales";
 
+  if (!date) {
+    return { ok: false, error: "La fecha es requerida" };
+  }
+
+  // VALIDACIÓN DE SEGURIDAD: Verificar que el día sigue libre antes de reservar
+  var dayCheck = getDayAvailability(date);
+  if (!dayCheck.isAvailable) {
+    return { ok: false, error: "Lo sentimos, esta fecha ya ha sido reservada o no está disponible." };
+  }
+
   var serviceLabels = {
-    tattoo_session:      "Sesión de Tatuaje",
+    tattoo_session:      "Sesión de Tatuaje (Jornada Completa)",
     design_consultation: "Consulta de Diseño",
     flash_day:           "Flash del Día",
   };
 
-  var label       = serviceLabels[service] || service;
-  var durationMin = SERVICE_DURATION[service] || 60;
+  var label = serviceLabels[service] || service;
 
-  var startDT = new Date(date + "T" + time + ":00-05:00");
-  var endDT   = new Date(startDT.getTime() + durationMin * 60 * 1000);
+  // Jornada completa del día (10:00 AM a 6:00 PM) en Bogotá (UTC-5)
+  var startDT = new Date(date + "T10:00:00-05:00");
+  var endDT   = new Date(date + "T18:00:00-05:00");
 
   var event = {
-    summary:     "[PENDIENTE] " + label + " \u2014 " + name,
-    description: "Nombre: "  + name  + "\n" +
-                 "Email: "   + email + "\n" +
-                 "Idea: "    + idea,
+    summary:     "[PENDIENTE] " + label + " — " + name,
+    description: "Servicio: " + label + "\n" +
+                 "Cliente: "  + name  + "\n" +
+                 "WhatsApp: " + (phone || email) + "\n" +
+                 "Email: "    + email + "\n" +
+                 "Idea: "     + idea  + "\n" +
+                 "Modalidad: Jornada Completa (Día Exclusivo)",
     start: { dateTime: startDT.toISOString(), timeZone: TIMEZONE },
     end:   { dateTime: endDT.toISOString(),   timeZone: TIMEZONE },
     colorId: "5", // amarillo = pendiente de confirmar

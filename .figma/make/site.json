@@ -1,5 +1,8 @@
 {
   "description": "Generate and explore harmonious color palettes featuring rich purples and pinks, ideal for designers seeking vibrant, cohesive color schemes.",
+  "icons": {
+    "icon": "/favicon.svg"
+  },
   "robots": {
     "index": false
   },
