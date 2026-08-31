@@ -189,7 +189,7 @@ export default function Home({ onNav }: HomeProps) {
               maxWidth: "42ch",
             }}
           >
-            Cada proyecto es una exploración de ideas, medios y posibilidades. El estudio en El Poblado es el espacio donde convergen el oficio, la investigación y la experimentación.
+            Cada proyecto es una exploración de ideas, medios y posibilidades. El estudio en Robledo es el espacio donde convergen el oficio, la investigación y la experimentación.
           </p>
           <ArrowLink onClick={() => navigate("about")}>Conocer mi recorrido</ArrowLink>
         </div>
@@ -222,7 +222,7 @@ export default function Home({ onNav }: HomeProps) {
               padding: "0.4rem 0.75rem",
             }}
           >
-            El Poblado, Medellín
+            Robledo, Medellín
           </div>
         </div>
       </section>
@@ -273,33 +273,33 @@ export default function Home({ onNav }: HomeProps) {
                 aspectRatio: "4/5",
               }}
             >
-                <WorkMedia
-                  src={work.image}
-                  alt={work.title}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                {/* Hover overlay */}
-                <div
-                  className="overlay"
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundColor: "rgba(9,8,14,0.72)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                    padding: "1.75rem",
-                  }}
-                >
-                  <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.25rem", fontWeight: 400, color: "#EDE8DF", margin: 0, marginBottom: "0.5rem", letterSpacing: "-0.01em" }}>
-                    {work.title}
-                  </p>
-                  <div style={{ display: "flex", gap: "1.25rem" }}>
-                    <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ABA7E3" }}>{work.year}</span>
-                    <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6A6575" }}>{work.category}</span>
-                  </div>
+              <WorkMedia
+                src={work.image}
+                alt={work.title}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              {/* Hover overlay */}
+              <div
+                className="overlay"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundColor: "rgba(9,8,14,0.72)",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  padding: "1.75rem",
+                }}
+              >
+                <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.25rem", fontWeight: 400, color: "#EDE8DF", margin: 0, marginBottom: "0.5rem", letterSpacing: "-0.01em" }}>
+                  {work.title}
+                </p>
+                <div style={{ display: "flex", gap: "1.25rem" }}>
+                  <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ABA7E3" }}>{work.year}</span>
+                  <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#6A6575" }}>{work.category}</span>
                 </div>
               </div>
+            </div>
           ))}
         </div>
       </section>
@@ -541,7 +541,7 @@ export default function Home({ onNav }: HomeProps) {
               Medellín, Colombia
             </p>
             <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", color: "#6A6575", marginBottom: "2rem" }}>
-              El Poblado · Citas con agenda previa
+              Robledo · Citas con agenda previa
             </p>
             <ArrowLink onClick={() => navigate("studio")}>Ver ubicación ↗</ArrowLink>
           </div>

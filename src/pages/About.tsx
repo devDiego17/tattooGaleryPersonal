@@ -1,152 +1,306 @@
+import { useState } from "react";
+
 export default function About() {
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+
   const timeline = [
     {
       year: "2017",
-      title: "Comienzos",
-      text: "Empiezo a explorar el mundo del arte, y me enamoro del mismo, inicialmente con el dibujo",
+      period: "01 — Inicios",
+      title: "Exploración & Dibujo",
+      text: "Primeros trazos y fascinación por la anatomía, el claroscuro y la precisión del trazo a tinta sobre papel.",
       image: "/about/2017.png",
+      tag: "Fundamentos",
     },
     {
       year: "2020",
-      title: "Exploración",
-      text: "Blackwork, fine line, dotwork. Cada técnica como un idioma nuevo. Los proyectos empezaron a cruzar disciplinas: ilustración, diseño gráfico, pintura.",
+      period: "02 — Evolución",
+      title: "Lenguaje & Micro-Detalle",
+      text: "Blackwork, fine line y dotwork. El proyecto evoluciona hacia el cruce entre la ilustración editorial y el tatuaje contemporáneo.",
       image: "/about/2021.jpg",
+      tag: "Blackwork & Fine Line",
     },
     {
-      year: "2023",
-      title: "Nueva etapa",
-      text: "Apertura del estudio propio en Medellín. El espacio como herramienta: un lugar para hacer, investigar y recibir personas que confían su piel.",
+      year: "2022",
+      period: "03 — Espacio",
+      title: "Estudio Propio en Medellín",
+      text: "Un santuario de creación íntimo en robledo: pensado para ofrecer una experiencia personalizada de jornada completa para un solo cliente al día.",
       image: "/about/2023.jpeg",
+      tag: "Robledo, Medellín",
     },
     {
       year: "2026",
-      title: "Actualidad",
-      text: "Proyectos editoriales, colaboraciones, colecciones de flash y obra propia. El tatuaje como punto de partida, no como límite.",
+      period: "04 — Actualidad",
+      title: "Obra de Autor & Publicaciones",
+      text: "Colecciones de flash exclusivas, colaboraciones editoriales y proyectos a gran escala. La piel como lienzo definitivo.",
       image: "/about/muerte.jpeg",
+      tag: "Obra Contemporánea",
     },
   ];
 
-  const disciplines = ["Tatuaje", "Ilustración", "Diseño Gráfico", "Pintura", "Publicaciones", "Fotografía"];
-  const influences = ["Arte precolombino", "Grabado japonés", "Cultura visual colombiana", "Diseño editorial", "Botánica", "Anatomía"];
+  const disciplines = [
+    { name: "Tatuaje de Autor", desc: "Fine line, micro-realismo y composiciones a medida" },
+    { name: "Ilustración Botánica & Anatómica", desc: "Grabado y piezas en tinta negra" },
+    { name: "Diseño Editorial & Gráfico", desc: "Publicaciones, zines y dirección de arte" },
+    { name: "Pintura & Obra Plástica", desc: "Exploración de texturas, sombras y gran formato" },
+  ];
+
+  const influences = [
+    "Grabado Japonés & Ukiyo-e",
+    "Iconografía & Arte Precolombino",
+    "Ilustración Científica del S. XIX",
+    "Cultura Visual Colombiana",
+    "Arquitectura Brutalista",
+    "Anatomía Clásica & Botánica",
+  ];
 
   return (
-    <div className="pt-16 md:pt-20 w-full overflow-hidden">
-      {/* Hero */}
-      <div className="grid grid-cols-1 md:grid-cols-2 min-h-[60vh] md:min-h-[70vh] border-b border-[#221F2C]">
-        <div className="px-6 py-12 sm:px-10 sm:py-16 md:p-14 lg:p-20 flex flex-col justify-center md:justify-end order-2 md:order-1">
-          <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-6">
-            Sobre mí
-          </p>
-          <h1 className="font-['Fraunces',Georgia,serif] text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-[#EDE8DF] m-0 mb-6 leading-[0.95]">
-            Diego
-            <br />
-            <em className="italic">Patiño</em>
-          </h1>
-          <p className="font-['Instrument_Sans',sans-serif] text-[0.9375rem] sm:text-base leading-relaxed text-[#6A6575] max-w-[46ch]">
-            Artista y tatuador multidisciplinario radicado en Medellín. El trabajo cruza el tatuaje, la ilustración, el diseño y la pintura con una misma pregunta de fondo: qué puede hacer una imagen.
-          </p>
-        </div>
+    <div className="w-full bg-[#09080E] text-[#EDE8DF] selection:bg-[#ABA7E3] selection:text-[#09080E]">
 
-        <div className="bg-[#13111A] overflow-hidden order-1 md:order-2 h-[320px] sm:h-[420px] md:h-auto min-h-full">
+      {/* ─────────────────────────────────────────────────────────────────────────
+          1. HERO CINEMATOGRÁFICO / EDITORIAL (FOTOGRAFÍA PROTAGONISTA ABSOLUTA)
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section className="relative min-h-[92vh] md:min-h-screen w-full flex flex-col justify-end pt-20 overflow-hidden border-b border-[#221F2C]">
+        {/* Imagen de fondo a pantalla casi completa con gradiente atmosférico */}
+        <div className="absolute inset-0 z-0">
           <img
             src="/rostro.jpg"
-            alt="Diego Patiño"
-            className="w-full h-full object-cover object-top"
+            alt="Diego Patiño — Retrato"
+            className="w-full h-full object-cover object-top md:object-[center_20%] scale-105 transition-transform duration-1000 ease-out"
           />
+          {/* Capas de iluminación editorial y viñeta suave */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#09080E] via-[#09080E]/40 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#09080E]/90 via-[#09080E]/30 to-transparent hidden md:block" />
+          <div className="absolute inset-0 backdrop-brightness-[0.88] backdrop-contrast-[1.05]" />
         </div>
-      </div>
 
-      {/* Disciplines + Influences */}
-      <div className="grid grid-cols-1 md:grid-cols-2 border-b border-[#221F2C]">
-        {[
-          { label: "Disciplinas", items: disciplines },
-          { label: "Influencias", items: influences },
-        ].map(({ label, items }, i) => (
-          <div
-            key={label}
-            className={`p-6 sm:p-10 md:p-14 lg:p-20 ${
-              i === 0 ? "border-b md:border-b-0 md:border-r border-[#221F2C]" : ""
-            }`}
-          >
-            <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-6">
-              {label}
+        {/* Metadatos editoriales en esquinas (Desktop) */}
+        <div className="absolute top-24 left-6 sm:left-12 lg:left-16 z-10 hidden md:flex items-center gap-3 text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium">
+          <span className="w-2 h-2 rounded-full bg-[#ABA7E3] animate-pulse" />
+          <span>Perfil de Artista &middot; Medellín, Colombia</span>
+        </div>
+
+        <div className="absolute top-24 right-6 sm:right-12 lg:right-16 z-10 hidden md:block text-right text-[0.625rem] tracking-[0.2em] uppercase text-[#6A6575]">
+          <span>Atención exclusiva &middot; 1 cliente por día</span>
+        </div>
+
+        {/* Contenido en capa sobre la fotografía */}
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 md:pb-20">
+          <div className="max-w-3xl">
+            <span className="inline-block text-[0.6875rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-semibold mb-4 drop-shadow-md">
+              Diego Patiño &mdash; Tatuador & Artista
+            </span>
+
+            <h1 className="font-['Fraunces',Georgia,serif] text-5xl sm:text-7xl lg:text-8xl font-light tracking-tight text-[#EDE8DF] leading-[0.92] mb-6 drop-shadow-lg">
+              La piel como
+              <br />
+              <em className="italic font-light text-[#ABA7E3]/90">lienzo y memoria.</em>
+            </h1>
+
+            <p className="font-['Instrument_Sans',sans-serif] text-base sm:text-lg md:text-xl leading-relaxed text-[#EDE8DF]/90 max-w-2xl font-light mb-8 drop-shadow">
+              Artista y tatuador multidisciplinario radicado en Medellín. Su obra cruza el tatuaje de línea fina, la ilustración editorial y el grabado oscuro, explorando la relación íntima entre el cuerpo, el dibujo y el significado personal.
             </p>
-            <ul className="list-none m-0 p-0 flex flex-col gap-3">
-              {items.map((item) => (
-                <li
-                  key={item}
-                  className="font-['Fraunces',Georgia,serif] text-lg sm:text-xl lg:text-2xl font-light text-[#EDE8DF] tracking-tight flex items-center gap-3"
-                >
-                  <span className="w-4 sm:w-5 h-px bg-[#3A3645] shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+
+            {/* Badges de identidad */}
+            <div className="flex flex-wrap items-center gap-4 text-xs tracking-wider uppercase text-[#EDE8DF]/80">
+              <span className="px-3.5 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
+                Blackwork Claroscuro
+              </span>
+              <span className="px-3.5 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
+                Estudio Privado en Robledo.
+              </span>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
 
-      {/* Timeline */}
-      <div className="px-6 sm:px-10 lg:px-16 py-16 sm:py-24 lg:py-32 max-w-6xl mx-auto">
-        <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0 mb-12 sm:mb-16">
-          Recorrido
-        </p>
+      {/* ─────────────────────────────────────────────────────────────────────────
+          2. COMPOSICIÓN EDITORIAL ASIMÉTRICA: EL ESPACIO & LA MIRADA
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 lg:py-36 px-6 sm:px-10 lg:px-16 border-b border-[#221F2C]">
+        <div className="max-w-7xl mx-auto">
 
-        <div className="flex flex-col">
-          {timeline.map((entry, i) => (
-            <div
-              key={entry.year}
-              className={`grid grid-cols-[55px_20px_1fr] sm:grid-cols-[85px_24px_1fr] md:grid-cols-[110px_32px_1fr] gap-x-3 sm:gap-x-6 md:gap-x-8 ${
-                i < timeline.length - 1 ? "pb-12 sm:pb-16 md:pb-20" : ""
-              }`}
-            >
-              {/* Year */}
-              <div className="text-right pt-1">
-                <span className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-4xl font-light text-[#4a4555] tracking-tight">
-                  {entry.year}
-                </span>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-              {/* Timeline line */}
-              <div className="flex flex-col items-center">
-                <div className="w-px h-3 bg-[#ABA7E3]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#ABA7E3] shrink-0 my-0.5" />
-                {i < timeline.length - 1 && (
-                  <div className="w-px flex-1 bg-[#221F2C]" />
-                )}
-              </div>
+            {/* Foto dominante 1: Mesa de trabajo / Detalle de arte (7 columnas en desktop) */}
+            <div className="lg:col-span-7 relative group">
+              <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full rounded-sm overflow-hidden bg-[#13111A] border border-[#221F2C] shadow-2xl">
+                <img
+                  src="/studio/estudio.jpeg"
+                  alt="Espacio de trabajo del estudio"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
 
-              {/* Content */}
-              <div className="pt-0.5">
-                <h3 className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-3xl font-light text-[#EDE8DF] m-0 mb-3 tracking-tight">
-                  {entry.title}
-                </h3>
-                <p className="font-['Instrument_Sans',sans-serif] text-sm sm:text-base leading-relaxed text-[#6A6575] m-0 mb-6 max-w-xl">
-                  {entry.text}
-                </p>
-                <div className="bg-[#13111A] aspect-video w-full max-w-md rounded-xs overflow-hidden border border-[#221F2C]/50">
-                  <img
-                    src={entry.image}
-                    alt={entry.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between text-xs tracking-widest uppercase">
+                  <span className="text-[#EDE8DF] font-medium">El Estudio &middot; Medellín</span>
+                  <span className="text-[#ABA7E3]">01 / El Refugio Creativo</span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Philosophy */}
-      <div className="border-t border-[#221F2C] px-6 sm:px-10 lg:px-16 py-16 sm:py-24 grid grid-cols-1 md:grid-cols-[1fr_2.5fr] gap-6 md:gap-16 items-start md:items-center max-w-6xl mx-auto">
-        <p className="font-['Instrument_Sans',sans-serif] text-[0.625rem] tracking-[0.2em] uppercase text-[#ABA7E3] m-0">
-          Filosofía de trabajo
-        </p>
-        <blockquote className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl md:text-3xl font-light leading-snug text-[#EDE8DF] m-0 tracking-tight">
-          "El tatuaje es la excusa para llegar al cuerpo. Lo que me interesa es la imagen, la idea que la genera, y la conversación que produce entre dos personas."
-        </blockquote>
-      </div>
+            {/* Bloque editorial complementario (5 columnas en desktop) */}
+            <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
+              <p className="text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium">
+                Filosofía de Creación
+              </p>
+
+              <h2 className="font-['Fraunces',Georgia,serif] text-3xl sm:text-4xl lg:text-5xl font-light text-[#EDE8DF] leading-[1.05] tracking-tight">
+                Cada pieza es una <em className="italic text-[#ABA7E3]">conversación</em> que queda grabada en el tiempo.
+              </h2>
+
+              <p className="font-['Instrument_Sans',sans-serif] text-sm sm:text-base leading-relaxed text-[#6A6575]">
+                No creo en el tatuaje masivo ni en los catálogos genéricos. Dedicar una jornada completa a un único cliente permite sumergirse en la historia, perfeccionar cada trazo milimétrico y garantizar que la pieza respire con la anatomía de quien la porta.
+              </p>
+
+              {/* Fotografía secundaria en escala artística */}
+              <div className="pt-4 grid grid-cols-2 gap-4">
+                <div className="aspect-[4/3] rounded-xs overflow-hidden border border-[#221F2C]">
+                  <img src="/studio/mesa.jpg" alt="Mesa de diseño" className="w-full h-full object-cover" />
+                </div>
+                <div className="aspect-[4/3] rounded-xs overflow-hidden border border-[#221F2C]">
+                  <img src="/about/muerte.png" alt="Detalle de ilustración" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+          3. RECORRIDO ARTÍSTICO / TIMELINE VISUAL (FOTOGRAFÍAS EN GRAN FORMATO)
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 lg:py-36 px-6 sm:px-10 lg:px-16 border-b border-[#221F2C]">
+        <div className="max-w-7xl mx-auto">
+
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 sm:mb-24 gap-6">
+            <div>
+              <p className="text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium mb-3">
+                Trayectoria & Hitos
+              </p>
+              <h2 className="font-['Fraunces',Georgia,serif] text-4xl sm:text-5xl lg:text-6xl font-light text-[#EDE8DF] tracking-tight">
+                El Recorrido <em className="italic font-light text-[#ABA7E3]">Visual</em>
+              </h2>
+            </div>
+            <p className="text-xs sm:text-sm text-[#6A6575] max-w-md font-light">
+              Casi una década de investigación gráfica, perfeccionamiento de técnica y construcción de un lenguaje inconfundible.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14">
+            {timeline.map((item, index) => (
+              <div
+                key={item.year}
+                className="group relative flex flex-col bg-[#13111A]/40 border border-[#221F2C] rounded-sm overflow-hidden p-6 sm:p-8 hover:border-[#ABA7E3]/40 transition-colors duration-500"
+                onMouseEnter={() => setActiveImageIndex(index)}
+                onMouseLeave={() => setActiveImageIndex(null)}
+              >
+                {/* Gran Imagen Protagonista de la Etapa */}
+                <div className="relative aspect-[16/10] w-full rounded-xs overflow-hidden bg-black/60 mb-6 border border-[#221F2C]">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[0.625rem] uppercase tracking-widest text-[#ABA7E3] border border-white/10">
+                    {item.tag}
+                  </div>
+                  <div className="absolute top-3 right-3 font-['Fraunces',Georgia,serif] text-2xl text-[#EDE8DF]/90">
+                    {item.year}
+                  </div>
+                </div>
+
+                <span className="text-[0.625rem] tracking-[0.2em] uppercase text-[#6A6575] mb-2 font-medium">
+                  {item.period}
+                </span>
+
+                <h3 className="font-['Fraunces',Georgia,serif] text-2xl sm:text-3xl font-light text-[#EDE8DF] tracking-tight mb-3">
+                  {item.title}
+                </h3>
+
+                <p className="font-['Instrument_Sans',sans-serif] text-sm leading-relaxed text-[#6A6575]">
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+          4. DISCIPLINAS & INFLUENCIAS CON ENFOQUE DE ALTA GAMA
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 lg:py-36 px-6 sm:px-10 lg:px-16 border-b border-[#221F2C]">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+
+          {/* Disciplinas */}
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <span className="w-6 h-px bg-[#ABA7E3]" />
+              <p className="text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium m-0">
+                Áreas de Trabajo
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              {disciplines.map((d, i) => (
+                <div key={d.name} className="border-b border-[#221F2C] pb-6 group">
+                  <div className="flex items-baseline justify-between mb-1">
+                    <h3 className="font-['Fraunces',Georgia,serif] text-2xl sm:text-3xl font-light text-[#EDE8DF] group-hover:text-[#ABA7E3] transition-colors">
+                      {d.name}
+                    </h3>
+                    <span className="text-xs font-mono text-[#4A4555]">0{i + 1}</span>
+                  </div>
+                  <p className="font-['Instrument_Sans',sans-serif] text-sm text-[#6A6575]">
+                    {d.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Influencias Visuales */}
+          <div className="lg:pl-8">
+            <div className="flex items-center gap-3 mb-8">
+              <span className="w-6 h-px bg-[#ABA7E3]" />
+              <p className="text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium m-0">
+                Universo Visual & Referentes
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {influences.map((inf) => (
+                <div
+                  key={inf}
+                  className="p-5 rounded-xs bg-[#13111A]/50 border border-[#221F2C] flex items-center gap-3 hover:border-[#ABA7E3]/30 transition-colors"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#ABA7E3] shrink-0" />
+                  <span className="font-['Instrument_Sans',sans-serif] text-xs sm:text-sm tracking-wide text-[#EDE8DF]/90">
+                    {inf}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Cita de Cierre */}
+            <div className="mt-12 p-8 rounded-sm bg-gradient-to-br from-[#13111A] to-[#09080E] border border-[#221F2C]">
+              <blockquote className="font-['Fraunces',Georgia,serif] text-xl sm:text-2xl font-light italic text-[#EDE8DF] leading-snug mb-4">
+                "El dibujo es el pensamiento que se hace visible; el tatuaje es ese pensamiento convertido en parte de ti."
+              </blockquote>
+              <span className="text-xs uppercase tracking-widest text-[#ABA7E3] font-medium">
+                &mdash; Diego Patiño
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 }
+
 

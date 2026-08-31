@@ -304,7 +304,7 @@ export const newsItems: NewsItem[] = [
     month: "ABR",
     year: 2026,
     image: "/news/estudio-nuevo.png",
-    excerpt: "El estudio se traslada a un nuevo espacio en El Poblado. Un lugar más amplio para trabajar, recibir clientes y desarrollar proyectos.",
+    excerpt: "El estudio se traslada a un nuevo espacio en Robledo. Un lugar más amplio para trabajar, recibir clientes y desarrollar proyectos.",
     tag: "Estudio",
   },
 ];
