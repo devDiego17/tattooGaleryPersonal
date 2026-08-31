@@ -133,7 +133,7 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
     const appsScriptUrl = import.meta.env.VITE_APPS_SCRIPT_URL;
 
     try {
-      let result = { ok: true, eventId: "mock-id" };
+      let result: { ok: boolean; eventId?: string; error?: string } = { ok: true, eventId: "mock-id" };
 
       if (appsScriptUrl) {
         const response = await fetch(appsScriptUrl, {
