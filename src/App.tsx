@@ -11,9 +11,30 @@ import Contact from "./pages/Contact";
 import Studio from "./pages/Studio";
 import Book from "./pages/Book";
 import type { Page } from "./data";
+import { pageToPath, pathToPage } from "./router";
 
 export default function App() {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>(() => pathToPage(window.location.pathname));
+
+  // Keep the browser history in sync so the back/forward arrows move
+  // between sections instead of leaving the site.
+  useEffect(() => {
+    window.history.replaceState({ page: pathToPage(window.location.pathname) }, "");
+
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as { page?: Page } | null;
+      setPage(state?.page ?? pathToPage(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const navigate = (next: Page) => {
+    if (next === page) return;
+    window.history.pushState({ page: next }, "", pageToPath(next));
+    setPage(next);
+  };
 
   // Scroll to top on page change
   useEffect(() => {
@@ -25,7 +46,7 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case "home":
-        return <Home onNav={setPage} />;
+        return <Home onNav={navigate} />;
       case "gallery":
         return <Gallery />;
       case "archive":
@@ -43,7 +64,7 @@ export default function App() {
       case "book":
         return <Book />;
       default:
-        return <Home onNav={setPage} />;
+        return <Home onNav={navigate} />;
     }
   };
 
@@ -55,13 +76,13 @@ export default function App() {
         color: "#EDE8DF",
       }}
     >
-      <Nav current={page} onNav={setPage} />
+      <Nav current={page} onNav={navigate} />
 
       <main>
         {renderPage()}
       </main>
 
-      {!noFooterPages.includes(page) && <Footer onNav={setPage} />}
+      {!noFooterPages.includes(page) && <Footer onNav={navigate} />}
     </div>
   );
 }
