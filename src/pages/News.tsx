@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { newsItems } from "../data";
-import type { NewsItem } from "../data";
+import type { NewsItem, Page } from "../data";
 
-function NewsDetail({ item, onClose }: { item: NewsItem; onClose: () => void }) {
+interface NewsProps {
+  onNav: (page: Page, prefill?: string) => void;
+}
+
+function NewsDetail({ item, onClose, onNav }: { item: NewsItem; onClose: () => void; onNav: NewsProps["onNav"] }) {
   return (
     <div style={{ paddingTop: "72px" }}>
       <div style={{ paddingInline: "clamp(1.5rem, 5vw, 4rem)", paddingBlock: "3rem" }}>
@@ -50,20 +54,95 @@ function NewsDetail({ item, onClose }: { item: NewsItem; onClose: () => void }) 
               {item.excerpt}
             </p>
           </div>
-          <div style={{ backgroundColor: "#13111A", aspectRatio: "4/3", overflow: "hidden" }}>
-            <img src={item.image} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ backgroundColor: item.gallery ? "#EDE8DF" : "#13111A", aspectRatio: "4/3", overflow: "hidden" }}>
+            <img
+              src={item.image}
+              alt={item.title}
+              style={{ width: "100%", height: "100%", objectFit: item.gallery ? "contain" : "cover" }}
+            />
           </div>
         </div>
+
+        {item.gallery && (
+          <div>
+            <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", marginBottom: "2rem" }}>
+              La Colección
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                gap: "1.5rem",
+              }}
+            >
+              {item.gallery.map((piece) => (
+                <div
+                  key={piece.name}
+                  onClick={() => piece.available && onNav("book", `Me interesa el tatuaje de ${piece.name}. `)}
+                  style={{ cursor: piece.available ? "pointer" : "default" }}
+                  title={piece.available ? `Agendar "${piece.name}"` : `${piece.name} — vendido`}
+                >
+                  <div
+                    className="work-item"
+                    style={{ position: "relative", backgroundColor: "#EDE8DF", aspectRatio: "3/4", overflow: "hidden", marginBottom: "0.75rem" }}
+                  >
+                    <img
+                      src={piece.image}
+                      alt={`Diseño de flash: ${piece.name}`}
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    />
+                    <div
+                      className="overlay"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundColor: "rgba(9,8,14,0.55)",
+                        display: "flex",
+                        alignItems: "flex-end",
+                        justifyContent: "center",
+                        padding: "1rem",
+                      }}
+                    >
+                      <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#ABA7E3" }}>
+                        {piece.available ? "Agendar este diseño →" : "Diseño ya vendido"}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "0.6rem",
+                        right: "0.6rem",
+                        fontFamily: "'Instrument Sans', sans-serif",
+                        fontSize: "0.5625rem",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                        color: piece.available ? "#09080E" : "#EDE8DF",
+                        backgroundColor: piece.available ? "#ABA7E3" : "#890C50",
+                        padding: "0.3rem 0.6rem",
+                      }}
+                    >
+                      {piece.available ? "Disponible" : "Vendido"}
+                    </div>
+                  </div>
+                  <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1rem", fontStyle: "italic", color: "#EDE8DF", margin: 0, textAlign: "center" }}>
+                    {piece.name}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default function News() {
+export default function News({ onNav }: NewsProps) {
   const [selected, setSelected] = useState<NewsItem | null>(null);
 
   if (selected) {
-    return <NewsDetail item={selected} onClose={() => setSelected(null)} />;
+    return <NewsDetail item={selected} onClose={() => setSelected(null)} onNav={onNav} />;
   }
 
   return (
@@ -126,8 +205,12 @@ export default function News() {
                     {item.excerpt}
                   </p>
                 </div>
-                <div style={{ backgroundColor: "#13111A", width: "90px", height: "70px", overflow: "hidden", flexShrink: 0 }}>
-                  <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ backgroundColor: item.gallery ? "#EDE8DF" : "#13111A", width: "90px", height: "70px", overflow: "hidden", flexShrink: 0 }}>
+                  <img
+                    src={item.image}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: item.gallery ? "contain" : "cover" }}
+                  />
                 </div>
               </div>
 

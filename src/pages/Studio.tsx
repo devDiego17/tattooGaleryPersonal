@@ -13,7 +13,7 @@ export default function Studio() {
       >
         <img
           src="/studio/estudio.jpeg"
-          alt="Studio interior"
+          alt="Interior del estudio"
           style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.75 }}
         />
         <div
@@ -104,7 +104,7 @@ export default function Studio() {
               className="link-arrow"
               style={{ color: "#EDE8DF" }}
             >
-              <span style={{ color: "#ABA7E3" }}>→</span> Open in Maps ↗
+              <span style={{ color: "#ABA7E3" }}>→</span> Abrir en Maps ↗
             </a>
           </div>
         </div>
@@ -158,14 +158,14 @@ export default function Studio() {
         <div style={{ backgroundColor: "#13111A", aspectRatio: "16/9", overflow: "hidden" }}>
           <img
             src="/studio/mesa.jpg"
-            alt="Studio workspace"
+            alt="Espacio de trabajo del estudio"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>
         <div style={{ backgroundColor: "#13111A", aspectRatio: "4/3", overflow: "hidden" }}>
           <img
             src="studio/yo.jpeg"
-            alt="Studio detail"
+            alt="Detalle del estudio"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>

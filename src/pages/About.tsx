@@ -7,108 +7,111 @@ export default function About() {
     {
       year: "2017",
       period: "01 — Inicios",
-      title: "Exploración & Dibujo",
-      text: "Primeros trazos y fascinación por la anatomía, el claroscuro y la precisión del trazo a tinta sobre papel.",
+      title: "Exploración y Dibujo",
+      text: "Primeros trazos y fascinación por la el arte como expresion del alma en la materia.",
       image: "/about/2017.png",
       tag: "Fundamentos",
     },
     {
       year: "2020",
       period: "02 — Evolución",
-      title: "Lenguaje & Micro-Detalle",
-      text: "Blackwork, fine line y dotwork. El proyecto evoluciona hacia el cruce entre la ilustración editorial y el tatuaje contemporáneo.",
+      title: "Primeros pasos en el tattoo",
+      text: "Empiezo a tatuar a mis amigos, en mi casa en plena pandemia del covid 19, experimentando con blackwork, fine line y dotwork. El proyecto evoluciona hacia el cruce entre la ilustración editorial y el tatuaje contemporáneo.",
       image: "/about/2021.jpg",
-      tag: "Blackwork & Fine Line",
+      tag: "Tatuaje underground",
     },
     {
-      year: "2022",
+      year: "2023",
       period: "03 — Espacio",
       title: "Estudio Propio en Medellín",
-      text: "Un santuario de creación íntimo en robledo: pensado para ofrecer una experiencia personalizada de jornada completa para un solo cliente al día.",
+      text: "me establesco en mi propio estudio, alcanzo un nivel profesional, pero la vida tenia otros planes.",
       image: "/about/2023.jpeg",
       tag: "Robledo, Medellín",
     },
     {
       year: "2026",
       period: "04 — Actualidad",
-      title: "Obra de Autor & Publicaciones",
-      text: "Colecciones de flash exclusivas, colaboraciones editoriales y proyectos a gran escala. La piel como lienzo definitivo.",
+      title: "Obra de Autor y renacimiento",
+      text: "Luego de situaciones personales complicadas, vuelvo al ruedo con mas nivel y mas fuerte que nunca.",
       image: "/about/muerte.jpeg",
       tag: "Obra Contemporánea",
     },
   ];
 
   const disciplines = [
-    { name: "Tatuaje de Autor", desc: "Fine line, micro-realismo y composiciones a medida" },
-    { name: "Ilustración Botánica & Anatómica", desc: "Grabado y piezas en tinta negra" },
-    { name: "Diseño Editorial & Gráfico", desc: "Publicaciones, zines y dirección de arte" },
-    { name: "Pintura & Obra Plástica", desc: "Exploración de texturas, sombras y gran formato" },
+    { name: "Tatuaje de Autor", desc: "composiciones a medida, en sombras (Claroscuro)" },
+    { name: "Ilustración y Grabado", desc: "Piezas en tinta negra" },
+    { name: "Obra Plástica", desc: "Exploración de texturas, sombras y gran formato" },
+    { name: "Creacion Audiovisual", desc: "Video arte experimental" },
   ];
 
   const influences = [
-    "Grabado Japonés & Ukiyo-e",
+    "Caravagio (maestro del claroscuro)",
     "Iconografía & Arte Precolombino",
     "Ilustración Científica del S. XIX",
-    "Cultura Visual Colombiana",
+    "Tatuadores como Hernan Yepes y Santiago Ortiz",
     "Arquitectura Brutalista",
-    "Anatomía Clásica & Botánica",
+    "Anatomía Clásica",
   ];
 
   return (
     <div className="w-full bg-[#09080E] text-[#EDE8DF] selection:bg-[#ABA7E3] selection:text-[#09080E]">
 
       {/* ─────────────────────────────────────────────────────────────────────────
-          1. HERO CINEMATOGRÁFICO / EDITORIAL (FOTOGRAFÍA PROTAGONISTA ABSOLUTA)
+          1. HERO EDITORIAL: TEXTO + RETRATO CONTENIDO (SIN ESPACIO MUERTO)
          ───────────────────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] md:min-h-screen w-full flex flex-col justify-end pt-20 overflow-hidden border-b border-[#221F2C]">
-        {/* Imagen de fondo a pantalla casi completa con gradiente atmosférico */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/rostro.jpg"
-            alt="Diego Patiño — Retrato"
-            className="w-full h-full object-cover object-top md:object-[center_20%] scale-105 transition-transform duration-1000 ease-out"
-          />
-          {/* Capas de iluminación editorial y viñeta suave */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#09080E] via-[#09080E]/40 to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#09080E]/90 via-[#09080E]/30 to-transparent hidden md:block" />
-          <div className="absolute inset-0 backdrop-brightness-[0.88] backdrop-contrast-[1.05]" />
-        </div>
+      <section className="relative w-full pt-28 sm:pt-32 pb-20 sm:pb-28 lg:pb-36 px-6 sm:px-10 lg:px-16 overflow-hidden border-b border-[#221F2C]">
+        {/* Resplandor ambiental sutil */}
+        <div className="pointer-events-none absolute -top-24 -right-24 w-[28rem] h-[28rem] bg-[#ABA7E3]/10 rounded-full blur-[120px]" />
 
-        {/* Metadatos editoriales en esquinas (Desktop) */}
-        <div className="absolute top-24 left-6 sm:left-12 lg:left-16 z-10 hidden md:flex items-center gap-3 text-[0.625rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-medium">
-          <span className="w-2 h-2 rounded-full bg-[#ABA7E3] animate-pulse" />
-          <span>Perfil de Artista &middot; Medellín, Colombia</span>
-        </div>
+        <div className="relative max-w-7xl mx-auto">
+          {/* Metadatos editoriales */}
+          <div className="hidden md:flex items-center justify-between mb-12 text-[0.625rem] tracking-[0.25em] uppercase">
+            <div className="flex items-center gap-3 text-[#ABA7E3] font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#ABA7E3] animate-pulse" />
+              <span>Perfil de Artista &middot; Medellín, Colombia</span>
+            </div>
+            <span className="text-[#6A6575]">Atención exclusiva &middot; 1 cliente por día</span>
+          </div>
 
-        <div className="absolute top-24 right-6 sm:right-12 lg:right-16 z-10 hidden md:block text-right text-[0.625rem] tracking-[0.2em] uppercase text-[#6A6575]">
-          <span>Atención exclusiva &middot; 1 cliente por día</span>
-        </div>
-
-        {/* Contenido en capa sobre la fotografía */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-12 sm:pb-16 md:pb-20">
-          <div className="max-w-3xl">
-            <span className="inline-block text-[0.6875rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-semibold mb-4 drop-shadow-md">
-              Diego Patiño &mdash; Tatuador & Artista
-            </span>
-
-            <h1 className="font-['Fraunces',Georgia,serif] text-5xl sm:text-7xl lg:text-8xl font-light tracking-tight text-[#EDE8DF] leading-[0.92] mb-6 drop-shadow-lg">
-              La piel como
-              <br />
-              <em className="italic font-light text-[#ABA7E3]/90">lienzo y memoria.</em>
-            </h1>
-
-            <p className="font-['Instrument_Sans',sans-serif] text-base sm:text-lg md:text-xl leading-relaxed text-[#EDE8DF]/90 max-w-2xl font-light mb-8 drop-shadow">
-              Artista y tatuador multidisciplinario radicado en Medellín. Su obra cruza el tatuaje de línea fina, la ilustración editorial y el grabado oscuro, explorando la relación íntima entre el cuerpo, el dibujo y el significado personal.
-            </p>
-
-            {/* Badges de identidad */}
-            <div className="flex flex-wrap items-center gap-4 text-xs tracking-wider uppercase text-[#EDE8DF]/80">
-              <span className="px-3.5 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
-                Blackwork Claroscuro
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            {/* Texto */}
+            <div className="order-2 lg:order-1 lg:col-span-7">
+              <span className="inline-block text-[0.6875rem] tracking-[0.25em] uppercase text-[#ABA7E3] font-semibold mb-4">
+                Diego Patiño &mdash; Tatuador & Artista
               </span>
-              <span className="px-3.5 py-1.5 rounded-full border border-white/20 bg-black/40 backdrop-blur-md">
-                Estudio Privado en Robledo.
-              </span>
+
+              <h1 className="font-['Fraunces',Georgia,serif] text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-[#EDE8DF] leading-[0.95] mb-6">
+                La piel como
+                <br />
+                <em className="italic font-light text-[#ABA7E3]/90">lienzo y memoria.</em>
+              </h1>
+
+              <p className="font-['Instrument_Sans',sans-serif] text-base sm:text-lg leading-relaxed text-[#EDE8DF]/80 max-w-xl font-light mb-8">
+                Artista y tatuador multidisciplinario radicado en Medellín. Su obra cruza el tatuaje de línea fina, la ilustración editorial y el grabado oscuro, explorando la relación íntima entre el cuerpo, el dibujo y el significado personal.
+              </p>
+
+              {/* Badges de identidad */}
+              <div className="flex flex-wrap items-center gap-4 text-xs tracking-wider uppercase text-[#EDE8DF]/80">
+                <span className="px-3.5 py-1.5 rounded-full border border-[#221F2C] bg-[#13111A]">
+                  Blackwork Claroscuro
+                </span>
+                <span className="px-3.5 py-1.5 rounded-full border border-[#221F2C] bg-[#13111A]">
+                  Estudio Privado en Robledo.
+                </span>
+              </div>
+            </div>
+
+            {/* Retrato, encuadrado a su propia proporción — sin fondo negro sobrante */}
+            <div className="order-1 lg:order-2 lg:col-span-5">
+              <div className="relative aspect-[4/5] w-full max-w-sm mx-auto lg:max-w-none rounded-sm overflow-hidden border border-[#221F2C] shadow-2xl">
+                <img
+                  src="/rostro.jpg"
+                  alt="Diego Patiño — Retrato"
+                  className="w-full h-full object-cover object-[center_22%]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#09080E]/70 via-transparent to-transparent" />
+              </div>
             </div>
           </div>
         </div>
@@ -207,7 +210,7 @@ export default function About() {
                   <div className="absolute top-3 left-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full text-[0.625rem] uppercase tracking-widest text-[#ABA7E3] border border-white/10">
                     {item.tag}
                   </div>
-                  <div className="absolute top-3 right-3 font-['Fraunces',Georgia,serif] text-2xl text-[#EDE8DF]/90">
+                  <div className="absolute top-3 right-3 px-3 py-1 bg-black/70 backdrop-blur-md rounded-full border border-white/10 font-['Fraunces',Georgia,serif] text-lg leading-none text-[#EDE8DF]">
                     {item.year}
                   </div>
                 </div>

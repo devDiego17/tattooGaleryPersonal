@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-const contactTypes = ["Tattoos", "Projects", "Collaborations", "General"];
+const contactTypes = ["Tatuajes", "Proyectos", "Colaboraciones", "General"];
 
 export default function Contact() {
-  const [type, setType] = useState("Tattoos");
+  const [type, setType] = useState("Tatuajes");
   const [form, setForm] = useState({ name: "", whatsapp: "", subject: "", message: "" });
   const [sent, setSent] = useState(false);
 
@@ -77,9 +77,9 @@ Mi número: ${form.whatsapp}`;
               lineHeight: 0.9,
             }}
           >
-            Let's
+            Vamos a
             <br />
-            <em style={{ fontStyle: "italic" }}>Talk</em>
+            <em style={{ fontStyle: "italic" }}>hablar</em>
           </h1>
         </div>
         <div>
@@ -278,7 +278,7 @@ Mi número: ${form.whatsapp}`;
                 transition: "background-color 0.3s",
               }}
             >
-              {sent ? "Enviado ✓" : "Send →"}
+              {sent ? "Enviado ✓" : "Enviar →"}
             </button>
             {sent && (
               <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.8125rem", color: "#6A6575" }}>

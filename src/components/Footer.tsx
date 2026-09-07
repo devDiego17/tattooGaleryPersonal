@@ -147,7 +147,7 @@ export default function Footer({ onNav }: FooterProps) {
             (e.target as HTMLElement).style.color = "#3A3645";
           }}
         >
-          Back to top ↑
+          Volver arriba ↑
         </button>
       </div>
     </footer>

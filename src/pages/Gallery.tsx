@@ -84,43 +84,28 @@ function WorkDetail({ work, onClose }: { work: Work; onClose: () => void }) {
           </div>
         </div>
 
-        {/* Main image */}
+        {/* Imagen principal — completa, sin recortes */}
         <div
           style={{
             backgroundColor: "#13111A",
-            marginBottom: "2rem",
-            maxHeight: "80vh",
+            marginBottom: "5rem",
+            maxHeight: "75vh",
+            display: "flex",
+            justifyContent: "center",
             overflow: "hidden",
           }}
         >
           <WorkMedia
             src={work.image}
             alt={work.title}
-            style={{ width: "100%", height: "80vh", objectFit: "cover" }}
+            style={{ maxWidth: "100%", maxHeight: "75vh", width: "auto", height: "auto", objectFit: "contain" }}
           />
-        </div>
-
-        {/* Detail images — simulated */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1.5rem",
-            marginBottom: "5rem",
-          }}
-        >
-          <div style={{ backgroundColor: "#13111A", aspectRatio: "4/3", overflow: "hidden" }}>
-            <WorkMedia src={work.image} alt="Detail" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.85) contrast(1.1)" }} />
-          </div>
-          <div style={{ backgroundColor: "#13111A", aspectRatio: "4/3", overflow: "hidden" }}>
-            <WorkMedia src={work.image} alt="Process" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.7) saturate(0.5)", objectPosition: "bottom" }} />
-          </div>
         </div>
 
         {/* Hairline */}
         <div style={{ height: "1px", backgroundColor: "#221F2C", marginBottom: "3rem" }} />
         <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", marginBottom: "2rem" }}>
-          Related Work
+          Obras Relacionadas
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem" }}>
           {works.filter((w) => w.id !== work.id && w.category === work.category).slice(0, 3).map((w) => (
@@ -142,10 +127,10 @@ function WorkDetail({ work, onClose }: { work: Work; onClose: () => void }) {
 }
 
 export default function Gallery() {
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("Todas");
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
 
-  const filtered = activeCategory === "All" ? works : works.filter((w) => w.category === activeCategory);
+  const filtered = activeCategory === "Todas" ? works : works.filter((w) => w.category === activeCategory);
 
   if (selectedWork) {
     return <WorkDetail work={selectedWork} onClose={() => setSelectedWork(null)} />;

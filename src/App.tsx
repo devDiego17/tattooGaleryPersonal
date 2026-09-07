@@ -15,6 +15,7 @@ import { pageToPath, pathToPage } from "./router";
 
 export default function App() {
   const [page, setPage] = useState<Page>(() => pathToPage(window.location.pathname));
+  const [bookPrefill, setBookPrefill] = useState("");
 
   // Keep the browser history in sync so the back/forward arrows move
   // between sections instead of leaving the site.
@@ -30,7 +31,8 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const navigate = (next: Page) => {
+  const navigate = (next: Page, prefill?: string) => {
+    if (prefill !== undefined) setBookPrefill(prefill);
     if (next === page) return;
     window.history.pushState({ page: next }, "", pageToPath(next));
     setPage(next);
@@ -52,7 +54,7 @@ export default function App() {
       case "archive":
         return <Archive />;
       case "news":
-        return <News />;
+        return <News onNav={navigate} />;
       case "shop":
         return <Shop />;
       case "about":
@@ -62,7 +64,7 @@ export default function App() {
       case "studio":
         return <Studio />;
       case "book":
-        return <Book />;
+        return <Book initialIdea={bookPrefill} />;
       default:
         return <Home onNav={navigate} />;
     }

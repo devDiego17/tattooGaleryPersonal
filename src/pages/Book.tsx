@@ -33,9 +33,10 @@ const inputStyle: React.CSSProperties = {
 
 interface BookingComponentProps {
   bookingType?: string; // e.g., 'tattoo_session' | 'consultation'
+  initialIdea?: string;
 }
 
-export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType = "tattoo_session" }) => {
+export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType = "tattoo_session", initialIdea = "" }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>("");
 
@@ -43,7 +44,7 @@ export const BookingComponent: React.FC<BookingComponentProps> = ({ bookingType 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  const [clientIdea, setClientIdea] = useState("");
+  const [clientIdea, setClientIdea] = useState(initialIdea);
 
   // Availability states
   const [busyDates, setBusyDates] = useState<string[]>([]);

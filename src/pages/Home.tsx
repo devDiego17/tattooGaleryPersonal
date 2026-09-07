@@ -46,7 +46,7 @@ export default function Home({ onNav }: HomeProps) {
         {/* Hero image */}
         <img
           src="/Background.jpeg"
-          alt="Diego Patiño — artist and tattooer"
+          alt="Diego Patiño — artista y tatuador"
           style={{
             position: "absolute",
             inset: 0,
@@ -106,7 +106,7 @@ export default function Home({ onNav }: HomeProps) {
                 margin: 0,
               }}
             >
-              Artist · Tattooer · Medellín, Colombia
+              Artista · Tatuador · Medellín, Colombia
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export default function Home({ onNav }: HomeProps) {
               gap: "0.75rem",
             }}
           >
-            <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.5625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#6A6575", writingMode: "vertical-rl" }}>Scroll</span>
+            <span style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.5625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#6A6575", writingMode: "vertical-rl" }}>Desliza</span>
             <div style={{ width: "1px", height: "48px", backgroundColor: "#221F2C" }}>
               <div
                 style={{
@@ -164,7 +164,7 @@ export default function Home({ onNav }: HomeProps) {
               marginBottom: "2.5rem",
             }}
           >
-            About
+            Sobre Mí
           </p>
           <p
             style={{
@@ -204,7 +204,7 @@ export default function Home({ onNav }: HomeProps) {
         >
           <img
             src="/rostro.jpg"
-            alt="Diego Patiño in the studio"
+            alt="Diego Patiño en el estudio"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           {/* Small accent label */}
@@ -252,7 +252,7 @@ export default function Home({ onNav }: HomeProps) {
               color: "#ABA7E3",
             }}
           >
-            Selected Work
+            Obra Seleccionada
           </p>
           <ArrowLink onClick={() => navigate("gallery")}>Ver toda la galería</ArrowLink>
         </div>
@@ -321,7 +321,7 @@ export default function Home({ onNav }: HomeProps) {
           }}
         >
           <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3" }}>
-            Latest / Novedades
+            Últimas Novedades
           </p>
           <ArrowLink onClick={() => navigate("news")}>Ver todas las novedades</ArrowLink>
         </div>
@@ -401,7 +401,7 @@ export default function Home({ onNav }: HomeProps) {
           }}
         >
           <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3" }}>
-            Shop
+            Tienda
           </p>
           <ArrowLink onClick={() => navigate("shop")}>Visitar tienda</ArrowLink>
         </div>
@@ -478,7 +478,7 @@ export default function Home({ onNav }: HomeProps) {
           }}
         >
           <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", margin: 0 }}>
-            Contact
+            Contacto
           </p>
           <div>
             <p
@@ -511,7 +511,7 @@ export default function Home({ onNav }: HomeProps) {
         >
           <img
             src="/studio/estudio.jpeg"
-            alt="Studio space"
+            alt="Espacio del estudio"
             style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }}
           />
           <div
@@ -526,7 +526,7 @@ export default function Home({ onNav }: HomeProps) {
             }}
           >
             <p style={{ fontFamily: "'Instrument Sans', sans-serif", fontSize: "0.625rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#ABA7E3", marginBottom: "0.75rem" }}>
-              Studio
+              Estudio
             </p>
             <p
               style={{
