@@ -46,6 +46,16 @@ export interface Product {
 
 export const works: Work[] = [
   {
+    id: "0056",
+    title: "Nosferatu",
+    year: 2026,
+    category: "Tatuaje",
+    technique: "Realismo",
+    image: "/works/nosferatu.mp4",
+    description: "Retrato del Conde Orlok inspirado en Nosferatu, en realismo blanco y negro",
+    span: "normal",
+  },
+  {
     id: "0001",
     title: "Charmander",
     year: 2023,
